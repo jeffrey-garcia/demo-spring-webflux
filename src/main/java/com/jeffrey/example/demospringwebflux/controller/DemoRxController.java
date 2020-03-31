@@ -74,6 +74,10 @@ public class DemoRxController {
         return demoRxService.createDemoEntity(
             demoEntity == null ? new DemoEntity(null):demoEntity
         ).map(_demoEntity -> {
+            /**
+             * Uses EmitterProcessor from the reactor API to effectively provide a bridge between
+             * the actual event source (rest endpoint in this case) and spring-cloud-stream.
+             */
             demoEntityEmitterProcessor.onNext(_demoEntity);
             return ResponseEntity
                     .status(HttpStatus.CREATED)

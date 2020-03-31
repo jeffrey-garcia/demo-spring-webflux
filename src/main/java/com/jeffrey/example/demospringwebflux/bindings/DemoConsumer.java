@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Component
@@ -15,7 +16,7 @@ public class DemoConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoConsumer.class);
 
     /**
-     * Reactive Consumer with a a Function<Flux<?>, Mono<Void>> return type, instructing
+     * Reactive Consumer with a Function<Flux<?>, Mono<Void>> return type, instructing
      * SCSt framework with no reference to subscribe to (no output), invoking then
      * operator as the last operator on the stream.
      */
@@ -27,24 +28,35 @@ public class DemoConsumer {
         }).then(); //not redirecting to any output stream
     }
 
-//    @Bean
-//    public Consumer<String> even() {
-//        return value -> System.out.println("EVEN: " + value);
-//    }
+    @Bean
+    public Function<Flux<String>, Mono<Void>> consumerRx1() {
+        return flux -> flux.doOnNext(value -> {
+            LOGGER.debug("rx1 - receiving: {}", value);
+        }).then();
+    }
 
-//    @Bean
-//    public Consumer<String> even() {
-//        return value -> {
-//            throw new RuntimeException("intentional");
-//        };
-//    }
+    @Bean Function<Flux<String>, Flux<String>> consumerRx2() {
+        return flux -> flux.doOnNext(value -> {
+            LOGGER.debug("rx2 - receiving: {}", value);
+        });
+    }
 
+    @Bean
+    public Consumer<String> consumer0() {
+        return value -> { LOGGER.debug("consumer0 - receiving: {}", value); };
+    }
 
-//    @StreamListener("test-out-0")
-//    public void receive(
-//        DemoEntity demoEntity
-//    ) throws Exception {
-//        LOGGER.debug("message received: {}", demoEntity.toString());
-//    }
+    /**
+     * Composing Function with Consumer will result in Consumer.
+     * See:
+     * https://cloud.spring.io/spring-cloud-function/reference/html/spring-cloud-function.html#_composing_non_functions
+     */
+    @Bean
+    public Function<String, String> consumer1() {
+        return value -> {
+            LOGGER.debug("consumer1: {}", value);
+            return value;
+        };
+    }
 
 }

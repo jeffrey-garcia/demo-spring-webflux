@@ -8,20 +8,31 @@ programming, the thread can perform other tasks while the data store
 retrieves the data. That offers a performance boost but requires a change
 to the reactive programming paradigm.
 
-The goal of this project is to be reactive from top to bottom. To do that
-the project uses Angular in the frontend and Spring Boot with Reactive Web
-as server. Mongodb is the database connected with the reactive MongoDB
-driver. That enables a reactive chain from the browser to the DB.
-The project uses an in memory MongoDB to be just cloned build and
-ready to run.
+The goal of this project is to be reactive from top to bottom. It demonstrates 
+bridging web endpoint with the Supplier of data (functional mechanism) that 
+will be fed into spring-cloud-stream framework, the approach can be used with 
+foreign event-driven sources, where the actual source of data may be coming 
+from a classical REST endpoint (external system which is not a binder).
 
+<b>Table of Contents:</b>
+- [Technology Stack](#technology_stack)
+- [Reactive Systems and Spring WebFlux](#reactive_system_webflux)
+    - [What's the problem?](#what_is_the_problem)
+    - [What's the solution?](#what_is_the_solution)
+    - [Why Reactive and non-blocking matters?](#why_reactive_non_blocking_matters)
+    - [What is Spring WebFlux?](#what_is_spring_webflux)
+    - [What is WebFlux's limitation?](#what_is_webflux_limitation)
+- [References](#references)    
 <br/>
 
-### Technology Stack
+### <a name="technology_stack"></a>Technology Stack
+- Java 8 (1.8.0_221)
 - SpringBoot 2.2.2
 - Spring Webflux 5.2.2
+- Spring data mongodb reactive 2.2.2
+- Spring cloud stream 3.0.3
 - Tomcat 9.0.29 (embedded web server in SpringBoot)
-- Java 8 (1.8.0_221)
+- MongoDB 4.0.3
 
 For the purpose of this project, we swap the embedded web server in
 SpringBoot from Netty to Tomcat, so we have fine grained control to
@@ -31,13 +42,13 @@ end-to-end.
 
 <br/>
 
-### Reactive Systems and Spring WebFlux
+### <a name="reactive_system_webflux"></a>Reactive Systems and Spring WebFlux
 To get clearer on what reactive systems are, it's helpful to understand
 the fundamental problem they're designed to solve.
 
 <br/>
 
-##### What's the problem?
+##### <a name="what_is_the_problem"></a>What's the problem?
 
 In traditional web applications, when a web server receives a request
 from a client, it accepts that request and places it in an execution
@@ -68,7 +79,7 @@ the computation power of the commodity hardware.
 
 <br/>
 
-##### What's the solution?
+##### <a name="what_is_the_solution"></a>What's the solution?
 
 Non-blocking web frameworks such as NodeJS takes a different approach.
 Instead of executing a blocking request and waiting for it to complete,
@@ -90,7 +101,7 @@ strengths, and the differences can be dramatic.
 
 <br/>
 
-##### What Reactive and non-blocking matters?
+##### <a name="why_reactive_non_blocking_matters"></a>Why Reactive and non-blocking matters?
 “Reactive,” refers to programming models that are built around reacting
 to change — network components reacting to I/O events, UI controllers
 reacting to mouse events, and others. In that sense, non-blocking is
@@ -108,7 +119,7 @@ to buffer, drop, or fail.
 
 <br/>
 
-##### What is Spring WebFlux?
+##### <a name="what_is_spring_webflux"></a>What is Spring WebFlux?
 
 To satisfy the need for building a reactive, non-blocking web stack to
 handle concurrency with a small number of threads and scale with fewer
@@ -129,7 +140,7 @@ to the use of RxJava or another reactive library.
 
 <br/>
 
-##### What is WebFlux's limitation?
+##### <a name="what_is_webflux_limitation"></a>What is WebFlux's limitation?
 
 If you have blocking persistence APIs (JPA, JDBC) or networking APIs to
 use, Spring MVC is the best choice for common architectures at least.
@@ -151,7 +162,7 @@ applications.
 
 <br/>
 
-### References:
+### <a name="references"></a>References:
 ##### Spring Web Flux
 - [Road to Reactive Spring Cloud](https://spring.io/blog/2018/06/20/the-road-to-reactive-spring-cloud)
 - [Notes on Reactive Programming Part I:](https://spring.io/blog/2016/06/07/notes-on-reactive-programming-part-i-the-reactive-landscape)
@@ -159,7 +170,6 @@ applications.
 - [Notes on Reactive Programming Part III:](https://spring.io/blog/2016/07/20/notes-on-reactive-programming-part-iii-a-simple-http-server-application)
 - [Web on Reactive Stack](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html)
 - [Reactor 3 Reference Guide](http://projectreactor.io/docs/core/release/reference/)
-
 - [Building a Reactive Web Service](https://spring.io/guides/gs/reactive-rest-service/)
 - [Spring Boot use another embedded web server](https://docs.spring.io/spring-boot/docs/current/reference/html/howto-embedded-web-servers.html)
 
@@ -168,6 +178,8 @@ applications.
 - [SCSt - Functional and Reactive](https://spring.io/blog/2019/10/17/spring-cloud-stream-functional-and-reactive)
 - [Event Driven Microservices with SCSt](https://spring.io/blog/2019/10/15/simple-event-driven-microservices-with-spring-cloud-stream)
 - [Event Routing with Functions](https://spring.io/blog/2019/10/31/spring-cloud-stream-event-routing)
-
 - [Spring Cloud Stream - Reactive Functions Support](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_reactive_functions_support)
 - [Spring Cloud Stream - Event Routing](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_event_routing)
+
+##### Spring Cloud Function
+- [Spring Cloud Function - Reference Guide](https://cloud.spring.io/spring-cloud-function/reference/html/spring-cloud-function.html#_introduction)
