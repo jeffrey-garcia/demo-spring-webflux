@@ -6,6 +6,7 @@ import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -22,6 +24,10 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/rx")
 public class DemoRxController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoController.class);
+
+    @Autowired
+    @Qualifier("demoEntityEmitProcessor")
+    EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
 
     @Autowired
     DemoRxService demoRxService;
@@ -67,11 +73,12 @@ public class DemoRxController {
     {
         return demoRxService.createDemoEntity(
             demoEntity == null ? new DemoEntity(null):demoEntity
-        ).map(_demoEntity ->
-            ResponseEntity
+        ).map(_demoEntity -> {
+            demoEntityEmitterProcessor.onNext(_demoEntity);
+            return ResponseEntity
                     .status(HttpStatus.CREATED)
-                    .body(_demoEntity)
-        );
+                    .body(_demoEntity);
+        });
     }
 
     /**
@@ -82,7 +89,6 @@ public class DemoRxController {
             ServerWebExchange serverWebExchange)
     {
         Mono<MultiValueMap<String, String>> formData = serverWebExchange.getFormData();
-
         return formData.flatMap(data ->
                 demoRxService.createDemoEntity(new DemoEntity(data.getFirst("data")))
         ).map(newDemoEntity ->

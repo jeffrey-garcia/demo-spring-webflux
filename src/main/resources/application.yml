@@ -1,0 +1,39 @@
+
+spring:
+  cloud:
+    function:
+      # control which function method in our code will be triggered if there are multiple
+      definition: supplierRx0;consumerRx0;
+      routing:
+        # enable routing to consumer
+        # routing function will be bound to input destination receiving all the messages and
+        # route them to other functions based on the provided instruction
+        enabled: true
+    stream:
+#      poller:
+#        # increase or decrease the rate of message production (1000 = 1s)
+#        fixed-delay: 2000
+      rabbit:
+        bindings:
+          consumerRx0-in-0:
+            consumer:
+              autoBindDlq: true
+      bindings:
+        supplierRx0-out-0:
+          destination: demoapp-exchange-rx0
+          group: demoapp-queue-rx0
+          binder: local_rabbit
+        consumerRx0-in-0:
+          destination: demoapp-exchange-rx0
+          group: demoapp-queue-rx0
+          binder: local_rabbit
+      binders:
+        local_rabbit:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                addresses: localhost:5672
+                username: guest
+                password: guest
+                connectionTimeout: 60000
