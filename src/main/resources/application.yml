@@ -3,7 +3,7 @@ spring:
   cloud:
     function:
       # control which function method in our code will be triggered if there are multiple
-      definition: supplierRx0;consumerRx0;supplierRx1;consumerRx1;
+      definition: supplierRx0;consumerRx0;
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;

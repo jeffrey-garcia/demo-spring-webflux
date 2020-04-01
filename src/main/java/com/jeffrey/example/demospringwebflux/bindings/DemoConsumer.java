@@ -1,7 +1,11 @@
 package com.jeffrey.example.demospringwebflux.bindings;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
@@ -15,16 +19,27 @@ import java.util.function.Function;
 public class DemoConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoConsumer.class);
 
+    @Autowired
+    private ObjectMapper jsonMapper;
+
     /**
      * Reactive Consumer with a Function<Flux<?>, Mono<Void>> return type, instructing
      * SCSt framework with no reference to subscribe to (no output), invoking then
      * operator as the last operator on the stream.
      */
     @Bean
-    public Function<Flux<Message<?>>, Mono<Void>> consumerRx0() {
+    public Function<Flux<Message<DemoEntity>>, Mono<Void>> consumerRx0() {
         return flux -> flux.map(_message -> {
-            LOGGER.debug("rx0 - receiving: {}", _message.toString());
-            return _message;
+            try {
+                DemoEntity demoEntity = _message.getPayload();
+                String jsonString = jsonMapper.writeValueAsString(demoEntity);
+                LOGGER.debug("rx0 - receiving entity: {}", jsonString);
+                return _message;
+            } catch (Exception e) {
+                //TODO: how to handle error in Flux
+                LOGGER.error(e.getMessage(), e);
+                return Flux.error(e);
+            }
         }).then(); //not redirecting to any output stream
     }
 
