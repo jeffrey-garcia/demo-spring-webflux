@@ -18,6 +18,8 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -71,18 +73,47 @@ public class DemoRxController {
     public Mono<ResponseEntity<DemoEntity>> createDemoEntityByJson(
             @RequestBody(required = false) DemoEntity demoEntity)
     {
-        return demoRxService.createDemoEntity(
+        Mono<DemoEntity> savedEntityMono = demoRxService.createDemoEntity(
             demoEntity == null ? new DemoEntity(null):demoEntity
-        ).map(_demoEntity -> {
-            /**
-             * Uses EmitterProcessor from the reactor API to effectively provide a bridge between
-             * the actual event source (rest endpoint in this case) and spring-cloud-stream.
-             */
+        ).doOnSuccess(_demoEntity -> {
+            LOGGER.debug("saved entity: " + _demoEntity.toString());
             demoEntityEmitterProcessor.onNext(_demoEntity);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(_demoEntity);
+        }).doOnError(throwable -> {
+            LOGGER.error("error: {}", throwable.getMessage());
         });
+
+        return savedEntityMono.map(_demoEntity -> {
+            return ResponseEntity.status(HttpStatus.CREATED).body(_demoEntity);
+        }).onErrorReturn(
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        );
+    }
+
+    /**
+     * curl -i -X POST 'http://localhost:8081/rx/demoEntities' -H "Content-Type: application/json" -d '[{"data":"abc"},{"data":"def"}]'
+     */
+    @PostMapping(path = "/demoEntities")
+    public Mono<ResponseEntity<Iterable<DemoEntity>>> createDemoEntitiesByJson(
+            @RequestBody Iterable<DemoEntity> demoEntities)
+    {
+        List<DemoEntity> savedEntities = new ArrayList<>();
+
+        Mono<List<DemoEntity>> savedEntitiesMono = demoRxService.createDemoEntities(demoEntities)
+                .doOnNext(demoEntity -> {
+                    LOGGER.debug("saved entity: " + demoEntity.toString());
+                    savedEntities.add(demoEntity);
+                    demoEntityEmitterProcessor.onNext(demoEntity);
+                })
+                .doOnError(throwable -> {
+                    LOGGER.error("error: {}", throwable.getMessage());
+                })
+                .collectList();
+
+        return savedEntitiesMono.map(_savedEntities ->
+                                    ResponseEntity.status(HttpStatus.CREATED).body((Iterable<DemoEntity>)savedEntities)
+                                ).onErrorReturn(
+                                    ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body((Iterable<DemoEntity>)savedEntities)
+                                );
     }
 
     /**

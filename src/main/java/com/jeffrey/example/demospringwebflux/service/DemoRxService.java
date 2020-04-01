@@ -17,6 +17,10 @@ public class DemoRxService {
         return demoRxDao.createDemoEntity(demoEntity);
     }
 
+    public Flux<DemoEntity> createDemoEntities(Iterable<DemoEntity> demoEntities) {
+        return demoRxDao.createDemoEntities(demoEntities);
+    }
+
     public Flux<DemoEntity> readAllDemoEntities(String sortBy) {
         return demoRxDao.readAllDemoEntities(sortBy);
     }
