@@ -10,10 +10,24 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RunWith(JUnit4.class)
 public class DemoTests {
+
+    @Test
+    public void verifyMonoToFlux() {
+        Mono<List<Integer>> inputMonoList = Mono.just(Arrays.asList(1,2,3,4));
+        Flux<Integer> outputFlux = inputMonoList.flatMapMany(values -> Flux.fromIterable(values));
+
+        List<Integer> outputList = new ArrayList<>();
+        outputFlux.doOnNext(value -> {
+            outputList.add(value);
+        }).subscribe().dispose();
+
+        Assert.assertEquals(4, outputList.size());
+    }
 
     @Test
     public void verifyFluxToMono() {
@@ -30,7 +44,22 @@ public class DemoTests {
     }
 
     @Test
-    public void verifyFluxError() {
+    public void verifyFlattenedStreamsOfStreams() {
+        Flux<Flux<Integer>> inputNestedFlux = Flux.just(Flux.just(1),Flux.just(2),Flux.just(3),Flux.just(4));
+        Flux<Integer> flattenedFlux = inputNestedFlux.flatMap(integerMono -> {
+            return integerMono;
+        });
+
+        List<Integer> outputList = new ArrayList<>();
+        flattenedFlux.doOnNext(value -> {
+            outputList.add(value);
+        }).subscribe().dispose();
+
+        Assert.assertEquals(4, outputList.size());
+    }
+
+    @Test
+    public void verifyFluxErrorHandle() {
         Flux<Integer> inputFlux = Flux.just(1,2,3,4);
         Flux<Integer> outputFlux = multipleByTwo(inputFlux);
 

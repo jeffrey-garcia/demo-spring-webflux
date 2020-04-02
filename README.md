@@ -17,11 +17,11 @@ from a classical REST endpoint (external system which is not a binder).
 <b>Table of Contents:</b>
 - [Technology Stack](#technology_stack)
 - [Reactive Systems and Spring WebFlux](#reactive_system_webflux)
-    - [What's the problem?](#what_is_the_problem)
-    - [What's the solution?](#what_is_the_solution)
-    - [Why Reactive and non-blocking matters?](#why_reactive_non_blocking_matters)
-    - [What is Spring WebFlux?](#what_is_spring_webflux)
-    - [What is WebFlux's limitation?](#what_is_webflux_limitation)
+    - [The Problem](#what_is_the_problem)
+    - [Non-blocking Web Frameworks](#what_is_the_solution)
+    - [Reactive Programming](#why_reactive_non_blocking_matters)
+    - [Spring WebFlux](#what_is_spring_webflux)
+    - [Limitation](#what_is_webflux_limitation)
 - [References](#references)    
 <br/>
 
@@ -48,7 +48,7 @@ the fundamental problem they're designed to solve.
 
 <br/>
 
-##### <a name="what_is_the_problem"></a>What's the problem?
+##### <a name="what_is_the_problem"></a>The Problem
 
 In traditional web applications, when a web server receives a request
 from a client, it accepts that request and places it in an execution
@@ -60,26 +60,21 @@ the blocking request and awaits a response. In this paradigm the thread
 is effectively blocked until the external resource responds, which
 causes performance issues and limits scalability.
 
-If you have 100 threads in your web server’s thread pool, and 101
-requests arrive, then that last extra request will not be served until
-one of the others finish processing their requests. If the others can
-finish (and thus free up the thread they’re utilising) before that
-101th request arrives, great! There’s possibly no need for reactive
-programming. If you can free up threads faster than new requests
-arrive, and the time spent in those threads is mostly due to
-input/output, then there is no need for reactive programming.
+For example if you have 100 threads in your web server’s thread pool, 
+and 101 requests arrive, then that last extra request will not be 
+served until one of the others finish processing their requests. 
 
-To combat these issues, developers create generously sized thread pools,
-so that while one thread is blocked another thread can continue to
-process requests. This require to scale the resource capacity for each
-running instance of the web service vertically, or scaling horizontally
-by creating more instances of the web service. Which is not ideal
-because both incur additional operating cost while not fully utilising
-the computation power of the commodity hardware.
+To combat these issues, developers typically create generously sized 
+thread pools, so that while one thread is blocked another thread can 
+continue to process requests. This require to scale the resource 
+capacity for each running instance of the web service vertically, or 
+scaling horizontally by creating more instances of the web service. 
+Which is not ideal because both incur additional operating cost while 
+not fully utilising the computation power of the commodity hardware.
 
 <br/>
 
-##### <a name="what_is_the_solution"></a>What's the solution?
+##### <a name="what_is_the_solution"></a>Non-Blocking Web Frameworks
 
 Non-blocking web frameworks such as NodeJS takes a different approach.
 Instead of executing a blocking request and waiting for it to complete,
@@ -91,17 +86,18 @@ non-blocking frameworks operate using an event loop. Within the loop,
 the application code either provides a callback or a future containing
 the code to execute when the asynchronous loop completes.
 
-By nature, reactive and non-blocking framework provides application the
-ability to scale with a small, fixed number of threads and less memory.
-That makes applications more resilient under load, because they scale
-in a more predictable way. In order to observe those benefits, however,
-you need to have some latency (including a mix of slow and unpredictable
+In principle, non-blocking framework provides application the ability 
+to scale with a small, fixed number of threads and less memory. That 
+makes applications more resilient under load, because they scale in a 
+more predictable way. In order to observe those benefits, however, you 
+need to have some latency (including a mix of slow and unpredictable
 network I/O). That is where the reactive stack begins to show its
 strengths, and the differences can be dramatic.
 
 <br/>
 
-##### <a name="why_reactive_non_blocking_matters"></a>Why Reactive and non-blocking matters?
+##### <a name="why_reactive_non_blocking_matters"></a>Reactive Programming
+
 “Reactive,” refers to programming models that are built around reacting
 to change — network components reacting to I/O events, UI controllers
 reacting to mouse events, and others. In that sense, non-blocking is
@@ -117,9 +113,14 @@ a boundary. If a publisher cannot slow down, it has to decide whether
 to buffer, drop, or fail.
 ```
 
+If you can free up threads ((and thus free up the thread they’re 
+utilising)) faster than new requests arrive, and the time spent in 
+those threads is mostly due to input/output, great! There's possibly 
+no need for reactive programming.
+
 <br/>
 
-##### <a name="what_is_spring_webflux"></a>What is Spring WebFlux?
+##### <a name="what_is_spring_webflux"></a>Spring WebFlux
 
 To satisfy the need for building a reactive, non-blocking web stack to
 handle concurrency with a small number of threads and scale with fewer
@@ -133,14 +134,14 @@ that applications do not block, and, therefore, non-blocking servers
 use a small, fixed-size thread pool (event loop workers) to handle
 requests.
 
-Reactor is the reactive library of choice for Spring WebFlux. WebFlux
+While Reactor is the reactive library of choice for Spring WebFlux. WebFlux
 requires Reactor as a core dependency but it is interoperable with other
 reactive libraries via Reactive Streams. WebFlux adapts transparently
-to the use of RxJava or another reactive library.
+to the use of RxJava or any other reactive library.
 
 <br/>
 
-##### <a name="what_is_webflux_limitation"></a>What is WebFlux's limitation?
+##### <a name="what_is_webflux_limitation"></a>Limitation
 
 If you have blocking persistence APIs (JPA, JDBC) or networking APIs to
 use, Spring MVC is the best choice for common architectures at least.
@@ -169,9 +170,12 @@ applications.
 - [Notes on Reactive Programming Part II:](https://spring.io/blog/2016/06/13/notes-on-reactive-programming-part-ii-writing-some-code)
 - [Notes on Reactive Programming Part III:](https://spring.io/blog/2016/07/20/notes-on-reactive-programming-part-iii-a-simple-http-server-application)
 - [Web on Reactive Stack](https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html)
-- [Reactor 3 Reference Guide](http://projectreactor.io/docs/core/release/reference/)
 - [Building a Reactive Web Service](https://spring.io/guides/gs/reactive-rest-service/)
 - [Spring Boot use another embedded web server](https://docs.spring.io/spring-boot/docs/current/reference/html/howto-embedded-web-servers.html)
+
+##### Project Reactor
+- [Reactor 3 Reference Guide](http://projectreactor.io/docs/core/release/reference/)
+- [Reactor Flux API](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html)
 
 ##### Spring Cloud Stream (SCSt)
 - [SCSt - Demystified and Simplified](https://spring.io/blog/2019/10/14/spring-cloud-stream-demystified-and-simplified)

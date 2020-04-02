@@ -29,6 +29,14 @@ public class DemoRxDao {
         final AtomicInteger i = new AtomicInteger(0);
         Flux<DemoEntity> savedEntitiesFlux = Flux.fromIterable(demoEntities)
                                                 .flatMap(demoEntity -> {
+                                                    /**
+                                                     * Ordering of the flattened values: this operator does not necessarily
+                                                     * preserve original ordering, as inner element are flattened as they
+                                                     * arrive.
+                                                     *
+                                                     * See also:
+                                                     * https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html#flatMap-java.util.function.Function-
+                                                     */
                                                     LOGGER.debug("saving entity: " + demoEntity.toString());
                                                     return demoRxRepository.save(demoEntity);
                                                                         // Simulate exception thrown during individual write to DB!
