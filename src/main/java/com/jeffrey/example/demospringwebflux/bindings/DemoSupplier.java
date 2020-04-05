@@ -1,10 +1,11 @@
 package com.jeffrey.example.demospringwebflux.bindings;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
+import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.function.context.PollableBean;
@@ -27,6 +28,12 @@ public class DemoSupplier {
     private ObjectMapper jsonMapper;
 
     @Autowired
+    private DemoRxService demoRxService;
+
+    @Autowired
+    private BeanFactory beanFactory;
+
+    @Autowired
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
 
@@ -36,22 +43,16 @@ public class DemoSupplier {
      */
     @Bean
     public Supplier<Flux<Message<DemoEntity>>> supplierRx0() {
-        return () ->
-                demoEntityEmitterProcessor.doOnNext(_demoEntity -> {
-                    try {
-                        String jsonString = jsonMapper.writeValueAsString(_demoEntity);
-                        LOGGER.debug("rx0 - emitting entity: {}", jsonString);
-                    } catch (JsonProcessingException e) {
-                        //TODO: how to handle error in Flux
-                        LOGGER.error(e.getMessage(), e);
-                    }
-
-                }).map(_demoEntity -> {
-                    Message<DemoEntity> message = MessageBuilder.withPayload(_demoEntity).build();
-                    LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
-                    LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
-                    return message;
-                });
+        return () -> {
+            return demoEntityEmitterProcessor.doOnNext(_demoEntity -> {
+                LOGGER.debug("rx0 - emitting entity: {}", _demoEntity.toString());
+            }).map(_demoEntity -> {
+                Message<DemoEntity> message = MessageBuilder.withPayload(_demoEntity).build();
+                LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
+                LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
+                return message;
+            });
+        };
     }
 
     /**

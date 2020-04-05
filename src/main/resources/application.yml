@@ -3,10 +3,11 @@ spring:
   cloud:
     function:
       # control which function method in our code will be triggered if there are multiple
-      definition: supplierRx0;consumerRx0;
+#      definition: supplierRx0;consumerRx0;
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;
+      definition: supplierRx0;consumerRx0;supplier0;consumer0;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
 #      definition: supplier0|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;

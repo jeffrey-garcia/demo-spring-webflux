@@ -5,24 +5,22 @@ import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
 import com.jeffrey.example.demospringwebflux.service.DemoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
+import org.springframework.integration.channel.AbstractMessageChannel;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -31,6 +29,9 @@ public class DemoController {
 
     @Autowired
     DemoService demoService;
+
+    @Autowired
+    BeanFactory beanFactory;
 
     /**
      * curl  -i -X GET "http://localhost:8081/demoEntity/id"
@@ -58,7 +59,15 @@ public class DemoController {
      */
     @GetMapping(path = "/demoEntities")
     public ResponseEntity<Collection<DemoEntity>> readAllDemoEntities(
-            @RequestParam(value = "sortBy", required = false, defaultValue = "") String sortBy) {
+            @RequestParam(value = "sortBy", required = false, defaultValue = "") String sortBy)
+    {
+        AbstractMessageChannel outputChannel = (AbstractMessageChannel) beanFactory.getBean("supplierRx0-out-0");
+
+        Message<DemoEntity> outgoingMessage = MessageBuilder
+                .withPayload(new DemoEntity(null))
+                .build();
+        outputChannel.send(outgoingMessage);
+
         Collection<DemoEntity> demoEntityCollection = demoService.readAllDemoEntities(sortBy);
 
         // enable client-side cache control, works in Safari but not Chrome (unless not using spring-webflux)
@@ -98,7 +107,7 @@ public class DemoController {
          * Process the request in specific scheduler and avoid blocking on the main
          * processing/event loop threads.
          *
-         * If you call blocking libraries without scheduling that work on a specific scheduler,
+         * If you invokeReactive blocking libraries without scheduling that work on a specific scheduler,
          * those calls will block one of the few threads available (by default, the Netty event
          * loop) and your application will only be able to serve a few requests concurrently
          * until hitting the maximum number of CPU cores.
@@ -108,7 +117,7 @@ public class DemoController {
          * to the number of cores on a regular Servlet container. As such the app won't be able
          * to process a large number of concurrent requests.
          *
-         * The whole point of using a reactive paradigm (and therefore reactor, and by extension
+         * The whole point of using a reactive paradigm (and therefore util, and by extension
          * its Mono and Flux objects) is that it enables you to code in a non-blocking way, meaning
          * that the current thread of execution isn't "held up" waiting for the mono to emit a
          * value.

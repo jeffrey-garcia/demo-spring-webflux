@@ -12,9 +12,24 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 @RunWith(JUnit4.class)
 public class DemoTests {
+
+    @Test
+    public void verifyClosureFunction() {
+        Function<Void, Integer> counter = new Function<Void, Integer>() {
+            private Integer count = 0;
+            @Override
+            public Integer apply(Void _void) {
+                return ++count;
+            }
+        };
+
+        Assert.assertEquals(Integer.valueOf(1), counter.apply(null));
+        Assert.assertEquals(Integer.valueOf(2), counter.apply(null));
+    }
 
     @Test
     public void verifyMonoToFlux() {
