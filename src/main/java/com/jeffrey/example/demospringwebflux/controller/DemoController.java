@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -107,20 +108,20 @@ public class DemoController {
          * Process the request in specific scheduler and avoid blocking on the main
          * processing/event loop threads.
          *
-         * If you invokeReactive blocking libraries without scheduling that work on a specific scheduler,
+         * If you invoke blocking libraries without scheduling that work on a specific scheduler,
          * those calls will block one of the few threads available (by default, the Netty event
          * loop) and your application will only be able to serve a few requests concurrently
-         * until hitting the maximum number of CPU cores.
+         * until hitting the maximum number of CPU cores (if the task is CPU intensive rather
+         * than I/O intensive).
          *
          * Parallel scheduler is primarily designed for CPU bound tasks, meaning its limited
          * by the max number of CPU cores. In this case, it's like setting your threadpool size
          * to the number of cores on a regular Servlet container. As such the app won't be able
          * to process a large number of concurrent requests.
          *
-         * The whole point of using a reactive paradigm (and therefore util, and by extension
-         * its Mono and Flux objects) is that it enables you to code in a non-blocking way, meaning
-         * that the current thread of execution isn't "held up" waiting for the mono to emit a
-         * value.
+         * The whole point of using a reactive paradigm (and therefore by extension, its Mono and
+         * Flux objects) is that it enables you to code in a non-blocking way, meaning that
+         * the current thread of execution isn't "held up" waiting for the mono to emit a value.
          *
          * If the ultimate goal is performance and scalability, wrapping blocking calls in a
          * reactive app is likely to perform worse than regular Servlet container, and hence the
@@ -128,9 +129,22 @@ public class DemoController {
          * - use Spring MVC and blocking return types when dealing with a blocking library (JPA)
          * - use Mono and Flux return types when not tied to any blocking library
          */
-        return serverWebExchange.getFormData().subscribeOn(Schedulers.elastic()).map(
-            _formData -> demoService.createDemoEntity(new DemoEntity(_formData.getFirst("data"))) // blocking DB write goes here
-        ).map(ResponseEntity.status(HttpStatus.CREATED)::body);
+
+        return serverWebExchange.getFormData().subscribeOn(Schedulers.elastic()).map(_formData -> {
+            DemoEntity demoEntity = new DemoEntity(_formData.getFirst("data"));
+
+            // the binding name is auto-created by the configuration spring.cloud.stream.source
+            streamBridge.send("supplier2-out-0", demoEntity);
+
+            return demoEntity;
+
+        }).map(demoEntity -> {
+            return ResponseEntity.status(HttpStatus.CREATED).body(demoEntity);
+        });
+
+//        return serverWebExchange.getFormData().subscribeOn(Schedulers.elastic()).map(
+//            _formData -> demoService.createDemoEntity(new DemoEntity(_formData.getFirst("data"))) // blocking DB write goes here
+//        ).map(ResponseEntity.status(HttpStatus.CREATED)::body);
     }
 
 }

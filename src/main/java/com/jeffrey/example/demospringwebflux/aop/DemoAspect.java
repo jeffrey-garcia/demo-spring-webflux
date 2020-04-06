@@ -61,14 +61,14 @@ public class DemoAspect {
     public void targetClassImplementsMessageChannelSendMethodWithArgumentMessage() {}
 
 //    @Before("anyTargetClassExcludingBinderPackage() && anyTargetClassThatImplementsMessageChannel()") // this works, but not preferred as it's not intuitive and difficult to reason about
-    @Before("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethod()") // this is preferred but not the best
-    @SuppressWarnings("unused")
-    public void interceptBeforeOutboundChannel(JoinPoint joinPoint) {
-        LOGGER.debug("intercept supplier - join point signature: {}", joinPoint.getSignature());
-        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", joinPoint.getSignature().getDeclaringType().getName());
-        LOGGER.debug("intercept supplier - proxy class: {}", joinPoint.getThis().getClass().getName());
-        LOGGER.debug("intercept supplier - implementing class: {}", joinPoint.getTarget().getClass().getName());
-    }
+//    @Before("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethod()") // this is preferred but not the best
+//    @SuppressWarnings("unused")
+//    public void interceptBeforeOutboundChannel(JoinPoint joinPoint) {
+//        LOGGER.debug("intercept supplier - join point signature: {}", joinPoint.getSignature());
+//        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", joinPoint.getSignature().getDeclaringType().getName());
+//        LOGGER.debug("intercept supplier - proxy class: {}", joinPoint.getThis().getClass().getName());
+//        LOGGER.debug("intercept supplier - implementing class: {}", joinPoint.getTarget().getClass().getName());
+//    }
 
     @Around("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethodWithArgumentMessage()")
     @SuppressWarnings("unused")
@@ -97,7 +97,7 @@ public class DemoAspect {
 
         LOGGER.debug("saving entity to DB");
 
-        // this will create a blocking behavior which defeats the reactive streaming
+        // this will create a blocking behavior which defeats the rationale of reactive programming
         // thus facilitate guarantee of atomic behavior for write DB and send message to broker
         demoService.createDemoEntity(demoEntity);
 

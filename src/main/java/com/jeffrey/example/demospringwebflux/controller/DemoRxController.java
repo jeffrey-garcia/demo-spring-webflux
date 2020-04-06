@@ -131,9 +131,11 @@ public class DemoRxController {
             ServerWebExchange serverWebExchange)
     {
         Mono<MultiValueMap<String, String>> formData = serverWebExchange.getFormData();
-        return formData.flatMap(data ->
-                demoRxService.createDemoEntity(new DemoEntity(data.getFirst("data")))
-        ).map(newDemoEntity ->
+        return formData.map(_formData -> {
+                DemoEntity demoEntity = new DemoEntity(_formData.getFirst("data"));
+                demoEntityEmitterProcessor.onNext(demoEntity);
+                return demoEntity;
+        }).map(newDemoEntity ->
                 ResponseEntity.status(HttpStatus.CREATED).body(newDemoEntity)
         );
     }
