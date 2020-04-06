@@ -9,7 +9,7 @@ spring:
 #      definition: supplier0;consumer0;
       definition: supplierRx0;consumerRx0;supplier0;consumer0;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
-#      definition: supplier0|toUpperCase;toLowerCase|consumer1;
+#      definition: supplier1|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;
       routing:
         # enable routing to consumer
@@ -17,15 +17,19 @@ spring:
         # route them to other functions based on the provided instruction
         enabled: true
     stream:
+      # trigger the creation of StreamBridge bean
+      # the provided name will be used as a trigger to create the output binding name "supplier0-out-0"
+      # this name will then be used by StreamBridge bean which allows us to send data to the output bindings
+      source: supplier0;consumer0;
 #      function:
 #        # use descriptive binding names allowing other configuration properties to refer to that binding name
-#        # somehow this is not working properly with SCSt v3.0.3
+#        # [IMPORTANT] somehow this is not working properly with SCSt v3.0.3
 #        bindings:
 #          supplier|toUpperCase: supplierCompose
 #          toLowerCase|consumer: consumerCompose
       poller:
         # increase or decrease the rate of message production (1000 = 1s)
-        fixed-delay: 5000
+        fixed-delay: 30000
       rabbit:
         bindings:
           consumerRx0-in-0:

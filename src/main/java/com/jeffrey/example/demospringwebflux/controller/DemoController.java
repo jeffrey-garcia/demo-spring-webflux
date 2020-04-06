@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,8 +31,12 @@ public class DemoController {
     @Autowired
     DemoService demoService;
 
+    /**
+     * StreamBridge bean which allows us to send data to an output binding
+     # effectively bridging non-stream application with spring-cloud-stream
+     */
     @Autowired
-    BeanFactory beanFactory;
+    StreamBridge streamBridge;
 
     /**
      * curl  -i -X GET "http://localhost:8081/demoEntity/id"
@@ -61,13 +66,6 @@ public class DemoController {
     public ResponseEntity<Collection<DemoEntity>> readAllDemoEntities(
             @RequestParam(value = "sortBy", required = false, defaultValue = "") String sortBy)
     {
-        AbstractMessageChannel outputChannel = (AbstractMessageChannel) beanFactory.getBean("supplierRx0-out-0");
-
-        Message<DemoEntity> outgoingMessage = MessageBuilder
-                .withPayload(new DemoEntity(null))
-                .build();
-        outputChannel.send(outgoingMessage);
-
         Collection<DemoEntity> demoEntityCollection = demoService.readAllDemoEntities(sortBy);
 
         // enable client-side cache control, works in Safari but not Chrome (unless not using spring-webflux)
@@ -86,14 +84,16 @@ public class DemoController {
      */
     @PostMapping(path = "/demoEntity")
     public ResponseEntity<DemoEntity> createDemoEntityByJson(
-            @RequestBody(required = false) DemoEntity demoEntity) {
+            @RequestBody(required = false) DemoEntity demoEntity)
+    {
+        DemoEntity savedEntity = demoService.createDemoEntity(demoEntity == null ? new DemoEntity(null) : demoEntity);
+
+        // the binding name is auto-created by the configuration spring.cloud.stream.source
+        streamBridge.send("supplier0-out-0", savedEntity.toString());
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(demoService.createDemoEntity(
-                        demoEntity == null ?
-                                new DemoEntity(null) : demoEntity
-                        )
-                );
+                .body(savedEntity);
     }
 
     /**

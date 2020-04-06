@@ -89,13 +89,32 @@ public class DemoSupplier {
     }
 
     /**
-     * Produce a single message every second and each message is sent to a destination that
+     * Produce a single message in a fix period (default 1000ms) and each message is sent to a destination that
      * is exposed by the binder.
+     *
+     * The polling period can be overriden by the configuration:
+     * spring.cloud.stream.poller.fixed-delay: {time in milliseconds}
      */
     @Bean
     public Supplier<String> supplier0() {
         return () -> {
-            String value = "Hello from supplier";
+            String value = "Hello from supplier 0";
+            LOGGER.debug("supplier0 - emitting: {}", value);
+            return value;
+        };
+    }
+
+    /**
+     * Produce a single message in a fix period (default 1000ms) and each message is sent to a destination that
+     * is exposed by the binder.
+     *
+     * The polling period can be overriden by the configuration:
+     * spring.cloud.stream.poller.fixed-delay: {time in milliseconds}
+     */
+    @Bean
+    public Supplier<String> supplier1() {
+        return () -> {
+            String value = "Hello from supplier 1";
             LOGGER.debug("supplier0 - emitting: {}", value);
             return value;
         };
