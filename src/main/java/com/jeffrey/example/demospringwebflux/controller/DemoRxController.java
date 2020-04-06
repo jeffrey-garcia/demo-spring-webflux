@@ -73,20 +73,27 @@ public class DemoRxController {
     public Mono<ResponseEntity<DemoEntity>> createDemoEntityByJson(
             @RequestBody(required = false) DemoEntity demoEntity)
     {
-        Mono<DemoEntity> savedEntityMono = demoRxService.createDemoEntity(
-            demoEntity == null ? new DemoEntity(null):demoEntity
-        ).doOnSuccess(_demoEntity -> {
-            LOGGER.debug("saved entity: " + _demoEntity.toString());
-            demoEntityEmitterProcessor.onNext(_demoEntity);
-        }).doOnError(throwable -> {
-            LOGGER.error("error: {}", throwable.getMessage());
-        });
+        demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
 
-        return savedEntityMono.map(_demoEntity -> {
-            return ResponseEntity.status(HttpStatus.CREATED).body(_demoEntity);
-        }).onErrorReturn(
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
-        );
+        // TODO: what happen if the emitter encounter exception?
+        demoEntityEmitterProcessor.onNext(demoEntity);
+
+        return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(demoEntity));
+
+//        Mono<DemoEntity> savedEntityMono = demoRxService.createDemoEntity(
+//            demoEntity == null ? new DemoEntity(null):demoEntity
+//        ).doOnSuccess(_demoEntity -> {
+//            LOGGER.debug("saved entity: " + _demoEntity.toString());
+//            demoEntityEmitterProcessor.onNext(_demoEntity);
+//        }).doOnError(throwable -> {
+//            LOGGER.error("error: {}", throwable.getMessage());
+//        });
+//
+//        return savedEntityMono.map(_demoEntity -> {
+//            return ResponseEntity.status(HttpStatus.CREATED).body(_demoEntity);
+//        }).onErrorReturn(
+//            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+//        );
     }
 
     /**

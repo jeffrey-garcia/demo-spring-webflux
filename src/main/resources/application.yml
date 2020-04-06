@@ -7,7 +7,8 @@ spring:
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;
-      definition: supplierRx0;consumerRx0;supplier0;consumer0;
+#      definition: supplierRx0;consumerRx0;supplier0;consumer0;
+      definition: supplierRx0;consumerRx0;supplier2;consumer2;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
 #      definition: supplier1|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;
@@ -18,9 +19,12 @@ spring:
         enabled: true
     stream:
       # trigger the creation of StreamBridge bean
-      # the provided name will be used as a trigger to create the output binding name "supplier0-out-0"
-      # this name will then be used by StreamBridge bean which allows us to send data to the output bindings
-      source: supplier0;consumer0;
+      # specify the supplier and consumer function name that will used by StreamBridge bean
+      # to send data to the output channel
+      # [IMPORTANT]
+      # - the provided function names must also be defined in spring.cloud.function.definition
+      # - the provided function names must also be defined with its associate channel bindings in spring.cloud.stream.bindings
+      source: supplier2;consumer2;
 #      function:
 #        # use descriptive binding names allowing other configuration properties to refer to that binding name
 #        # [IMPORTANT] somehow this is not working properly with SCSt v3.0.3
@@ -29,7 +33,7 @@ spring:
 #          toLowerCase|consumer: consumerCompose
       poller:
         # increase or decrease the rate of message production (1000 = 1s)
-        fixed-delay: 30000
+        fixed-delay: 120000
       rabbit:
         bindings:
           consumerRx0-in-0:
@@ -83,6 +87,14 @@ spring:
         unwrapDoubleQuotes|consumerRx2-in-0:
           destination: demoComp-exchange-rx0
           group: demoComp-queue-rx0
+          binder: local_rabbit
+        supplier2-out-0:
+          destination: demofunc-exchange-2
+          group: demofunc-queue-2
+          binder: local_rabbit
+        consumer2-in-0:
+          destination: demofunc-exchange-2
+          group: demofunc-queue-2
           binder: local_rabbit
       binders:
         local_rabbit:

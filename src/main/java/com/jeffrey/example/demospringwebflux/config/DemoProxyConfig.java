@@ -34,10 +34,10 @@ public class DemoProxyConfig {
                 }
 
                 ReflectiveMethodInvocation reflectiveMethodInvocation = ((ReflectiveMethodInvocation) methodInvocation);
-                LOGGER.debug("before intercept - join point signature: {}", reflectiveMethodInvocation.toString());
-                LOGGER.debug("before intercept - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
-                LOGGER.debug("before intercept - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
-                LOGGER.debug("before intercept - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
+                LOGGER.debug("intercept consumer - join point signature: {}", reflectiveMethodInvocation.toString());
+                LOGGER.debug("intercept consumer - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
+                LOGGER.debug("intercept consumer - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
+                LOGGER.debug("intercept consumer - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
 
                 Object[] args = methodInvocation.getArguments();
                 Assert.notNull(args, "arguments should not be null");
@@ -67,10 +67,10 @@ public class DemoProxyConfig {
                 }
 
                 ReflectiveMethodInvocation reflectiveMethodInvocation = ((ReflectiveMethodInvocation) methodInvocation);
-                LOGGER.debug("before intercept - join point signature: {}", reflectiveMethodInvocation.toString());
-                LOGGER.debug("before intercept - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
-                LOGGER.debug("before intercept - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
-                LOGGER.debug("before intercept - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
+                LOGGER.debug("intercept supplier - join point signature: {}", reflectiveMethodInvocation.toString());
+                LOGGER.debug("intercept supplier - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
+                LOGGER.debug("intercept supplier - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
+                LOGGER.debug("intercept supplier - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
 
                 Object[] args = methodInvocation.getArguments();
                 Assert.notNull(args, "arguments should not be null");

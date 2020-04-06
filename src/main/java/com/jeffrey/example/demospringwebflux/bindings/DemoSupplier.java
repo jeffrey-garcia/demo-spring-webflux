@@ -120,4 +120,22 @@ public class DemoSupplier {
         };
     }
 
+    /**
+     * Produce a single message in a fix period (default 1000ms) and each message is sent to a destination that
+     * is exposed by the binder.
+     *
+     * The polling period can be overriden by the configuration:
+     * spring.cloud.stream.poller.fixed-delay: {time in milliseconds}
+     */
+    @Bean
+    public Supplier<Message<DemoEntity>> supplier2() {
+        return () -> {
+            DemoEntity demoEntity = new DemoEntity("Hello from supplier 2");
+            Message<DemoEntity> message = MessageBuilder.withPayload(demoEntity).build();
+            LOGGER.debug("supplier0 - emitting: {}", message.toString());
+            return message;
+        };
+    }
+
+
 }

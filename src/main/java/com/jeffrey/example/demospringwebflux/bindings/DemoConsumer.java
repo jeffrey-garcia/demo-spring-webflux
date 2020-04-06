@@ -87,4 +87,10 @@ public class DemoConsumer {
         };
     }
 
+    @Bean
+    public Consumer<Message<DemoEntity>> consumer2() {
+        return message -> {
+            LOGGER.debug("consumer2 - receiving: {}", message.toString());
+        };
+    }
 }

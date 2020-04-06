@@ -86,14 +86,14 @@ public class DemoController {
     public ResponseEntity<DemoEntity> createDemoEntityByJson(
             @RequestBody(required = false) DemoEntity demoEntity)
     {
-        DemoEntity savedEntity = demoService.createDemoEntity(demoEntity == null ? new DemoEntity(null) : demoEntity);
+        demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
 
         // the binding name is auto-created by the configuration spring.cloud.stream.source
-        streamBridge.send("supplier0-out-0", savedEntity.toString());
+        streamBridge.send("supplier2-out-0", demoEntity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(savedEntity);
+                .body(demoEntity);
     }
 
     /**
