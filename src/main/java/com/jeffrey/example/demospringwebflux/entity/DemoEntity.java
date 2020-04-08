@@ -37,4 +37,8 @@ public class DemoEntity {
         return String.format("id: %s, createdOn: %s, data: %s", id, createdOn.toString(), data);
     }
 
+    public String getData() {
+        return data;
+    }
+
 }

@@ -3,20 +3,20 @@ spring:
   cloud:
     function:
       # control which function method in our code will be triggered if there are multiple
-#      definition: supplierRx0;consumerRx0;
+      definition: supplierRx0;consumerRx0;
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;
 #      definition: supplierRx0;consumerRx0;supplier0;consumer0;
-      definition: supplierRx0;consumerRx0;supplier2;consumer2;
+#      definition: supplierRx0;consumerRx0;supplier2;consumer2;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
 #      definition: supplier1|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;
-      routing:
-        # enable routing to consumer
-        # routing function will be bound to input destination receiving all the messages and
-        # route them to other functions based on the provided instruction
-        enabled: true
+#      routing:
+#        # explicit enablement of routing function
+#        # routing function will be bound to input destination receiving all the messages and
+#        # route them to other functions based on the provided instruction in message header
+#        enabled: true
     stream:
       # trigger the creation of StreamBridge bean
       # specify the supplier and consumer function name that will used by StreamBridge bean
@@ -33,12 +33,12 @@ spring:
 #          toLowerCase|consumer: consumerCompose
       poller:
         # increase or decrease the rate of message production (1000 = 1s)
-        fixed-delay: 120000
-      rabbit:
-        bindings:
-          consumerRx0-in-0:
-            consumer:
-              autoBindDlq: true
+        fixed-delay: 60000
+#      rabbit:
+#        bindings:
+#          consumerRx0-in-0:
+#            consumer:
+#              autoBindDlq: true
       bindings:
         supplierRx0-out-0:
           destination: demofunc-exchange-rx0
@@ -48,54 +48,54 @@ spring:
           destination: demofunc-exchange-rx0
           group: demofunc-queue-rx0
           binder: local_rabbit
-        supplierRx1-out-0:
-          destination: demofunc-exchange-rx1
-          group: demofunc-queue-rx1
-          binder: local_rabbit
-        consumerRx1-in-0:
-          destination: demofunc-exchange-rx1
-          group: demofunc-queue-rx1
-          binder: local_rabbit
-        supplierRx2-out-0:
-          destination: demofunc-exchange-rx2
-          group: demofunc-queue-rx2
-          binder: local_rabbit
-        consumerRx2-in-0:
-          destination: demofunc-exchange-rx2
-          group: demofunc-queue-rx2
-          binder: local_rabbit
-        supplier0-out-0:
-          destination: demofunc-exchange-0
-          group: demofunc-queue-0
-          binder: local_rabbit
-        consumer0-in-0:
-          destination: demofunc-exchange-0
-          group: demofunc-queue-0
-          binder: local_rabbit
-        supplier0|toUpperCase-out-0:
-          destination: demoComp-exchange-0
-          group: demoComp-queue-0
-          binder: local_rabbit
-        toLowerCase|consumer1-in-0:
-          destination: demoComp-exchange-0
-          group: demoComp-queue-0
-          binder: local_rabbit
-        supplierRx2|wrapDoubleQuotes-out-0:
-          destination: demoComp-exchange-rx0
-          group: demoComp-queue-rx0
-          binder: local_rabbit
-        unwrapDoubleQuotes|consumerRx2-in-0:
-          destination: demoComp-exchange-rx0
-          group: demoComp-queue-rx0
-          binder: local_rabbit
-        supplier2-out-0:
-          destination: demofunc-exchange-2
-          group: demofunc-queue-2
-          binder: local_rabbit
-        consumer2-in-0:
-          destination: demofunc-exchange-2
-          group: demofunc-queue-2
-          binder: local_rabbit
+#        supplierRx1-out-0:
+#          destination: demofunc-exchange-rx1
+#          group: demofunc-queue-rx1
+#          binder: local_rabbit
+#        consumerRx1-in-0:
+#          destination: demofunc-exchange-rx1
+#          group: demofunc-queue-rx1
+#          binder: local_rabbit
+#        supplierRx2-out-0:
+#          destination: demofunc-exchange-rx2
+#          group: demofunc-queue-rx2
+#          binder: local_rabbit
+#        consumerRx2-in-0:
+#          destination: demofunc-exchange-rx2
+#          group: demofunc-queue-rx2
+#          binder: local_rabbit
+#        supplier0-out-0:
+#          destination: demofunc-exchange-0
+#          group: demofunc-queue-0
+#          binder: local_rabbit
+#        consumer0-in-0:
+#          destination: demofunc-exchange-0
+#          group: demofunc-queue-0
+#          binder: local_rabbit
+#        supplier0|toUpperCase-out-0:
+#          destination: demoComp-exchange-0
+#          group: demoComp-queue-0
+#          binder: local_rabbit
+#        toLowerCase|consumer1-in-0:
+#          destination: demoComp-exchange-0
+#          group: demoComp-queue-0
+#          binder: local_rabbit
+#        supplierRx2|wrapDoubleQuotes-out-0:
+#          destination: demoComp-exchange-rx0
+#          group: demoComp-queue-rx0
+#          binder: local_rabbit
+#        unwrapDoubleQuotes|consumerRx2-in-0:
+#          destination: demoComp-exchange-rx0
+#          group: demoComp-queue-rx0
+#          binder: local_rabbit
+#        supplier2-out-0:
+#          destination: demofunc-exchange-2
+#          group: demofunc-queue-2
+#          binder: local_rabbit
+#        consumer2-in-0:
+#          destination: demofunc-exchange-2
+#          group: demofunc-queue-2
+#          binder: local_rabbit
       binders:
         local_rabbit:
           type: rabbit

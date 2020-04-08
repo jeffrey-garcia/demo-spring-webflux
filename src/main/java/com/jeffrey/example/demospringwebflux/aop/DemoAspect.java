@@ -4,17 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import com.jeffrey.example.demospringwebflux.service.DemoService;
-import org.aspectj.lang.JoinPoint;
+import com.jeffrey.example.demospringwebflux.util.MonoResultWrapper;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
 import org.springframework.util.Assert;
+import reactor.core.publisher.Mono;
 
 
 /**
@@ -28,6 +30,9 @@ public class DemoAspect {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoAspect.class);
 
     @Autowired
+    ApplicationContext applicationContext;
+
+    @Autowired
     ObjectMapper jsonMapper;
 
     @Autowired
@@ -37,24 +42,24 @@ public class DemoAspect {
     DemoRxService demoRxService;
 
 
-    @Deprecated
-    @SuppressWarnings("unused")
-    @Pointcut("this(org.springframework.messaging.MessageChannel)")
-    public void anyTargetClassThatImplementsMessageChannel() {}
+//    @Deprecated
+//    @SuppressWarnings("unused")
+//    @Pointcut("this(org.springframework.messaging.MessageChannel)")
+//    public void anyTargetClassThatImplementsMessageChannel() {}
 
-    @Deprecated
-    @SuppressWarnings("unused")
-    @Pointcut("!within(org.springframework.cloud.stream.binder.*)")
-    public void anyTargetClassExcludingBinderPackage() {}
+//    @Deprecated
+//    @SuppressWarnings("unused")
+//    @Pointcut("!within(org.springframework.cloud.stream.binder.*)")
+//    public void anyTargetClassExcludingBinderPackage() {}
 
     @SuppressWarnings("unused")
     @Pointcut("target(org.springframework.cloud.stream.messaging.DirectWithAttributesChannel)")
     public void targetClassIsDirectWithAttributesChannel() {}
 
-    @Deprecated
-    @SuppressWarnings("unused")
-    @Pointcut("execution(public * org.springframework.messaging.MessageChannel.send(*))")
-    public void targetClassImplementsMessageChannelSendMethod() {}
+//    @Deprecated
+//    @SuppressWarnings("unused")
+//    @Pointcut("execution(public * org.springframework.messaging.MessageChannel.send(*))")
+//    public void targetClassImplementsMessageChannelSendMethod() {}
 
     @SuppressWarnings("unused")
     @Pointcut("execution(public * org.springframework.messaging.MessageChannel.send(*)) && args(org.springframework.messaging.Message)")
@@ -81,6 +86,11 @@ public class DemoAspect {
         LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
         LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
 
+        // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
+        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
+        LOGGER.debug("intercept supplier - channel name: {}", channelName);
+        // TODO: verify of the channel is an output channel
+
         Object[] args = proceedingJoinPoint.getArgs();
         Assert.notNull(args, "argument must be provided for MessageChannel.send(Message<?> message)");
         Assert.isTrue(args.length==1, "there must be only one argument for MessageChannel.send(Message<?> message)");
@@ -95,16 +105,75 @@ public class DemoAspect {
         String jsonString = new String(bytes);
         DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
 
-        LOGGER.debug("saving entity to DB");
+        LOGGER.debug("saving entity to DB: {}", jsonString);
 
         // this will create a blocking behavior which defeats the rationale of reactive programming
         // thus facilitate guarantee of atomic behavior for write DB and send message to broker
-        demoService.createDemoEntity(demoEntity);
+//        demoService.createDemoEntity(demoEntity);
 
         // this is non-blocking but cannot propagate database write error back to controller
-//        demoRxService.createDemoEntity(demoEntity).subscribe().dispose();
+        MonoResultWrapper<Object> resultWrapper = new MonoResultWrapper<>();
 
-        return proceedingJoinPoint.proceed();
+        Mono<Boolean> resultMono = executeJoinPoint(writeEntity(demoEntity, resultWrapper), proceedingJoinPoint, resultWrapper);
+        resultMono.subscribe();
+
+        if (resultWrapper.getThrowable()!=null) {
+            throw resultWrapper.getThrowable();
+        }
+        return resultWrapper.getResult();
+    }
+
+    private Mono<Boolean> writeEntity(
+            DemoEntity demoEntity,
+            MonoResultWrapper resultWrapper)
+    {
+        return Mono.just(demoEntity)
+                .map(_demoEntity -> {
+                    demoRxService.createDemoEntity(demoEntity).subscribe();
+                    return _demoEntity;
+                })
+                .onErrorMap(throwable -> {
+                    resultWrapper.setThrowable(throwable);
+                    return throwable;
+                })
+                .map(value -> {
+                    return true;
+                })
+                .onErrorReturn(
+                    false
+                )
+                .onErrorStop();
+    }
+
+    private Mono<Boolean> executeJoinPoint(
+            Mono<Boolean> mono,
+            ProceedingJoinPoint proceedingJoinPoint,
+            MonoResultWrapper resultWrapper)
+    {
+        return mono
+                .map(writeDbResult -> {
+                    LOGGER.debug("write DB result: {}", writeDbResult);
+                    if (writeDbResult) {
+                        try {
+                            Object object = proceedingJoinPoint.proceed();
+                            resultWrapper.setResult(object);
+                        } catch (Throwable throwable) {
+                            throw new RuntimeException(throwable);
+                        }
+                    }
+                    return writeDbResult;
+                })
+                .onErrorMap(throwable -> {
+                    resultWrapper.setThrowable(throwable);
+                    return throwable;
+                })
+                .map(value -> {
+                    return value;
+                })
+                .onErrorReturn(
+                    false
+                )
+                .onErrorStop();
     }
 
 }

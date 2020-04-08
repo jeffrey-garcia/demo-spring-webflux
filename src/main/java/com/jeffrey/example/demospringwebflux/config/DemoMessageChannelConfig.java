@@ -6,25 +6,22 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
+import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.function.context.catalog.BeanFactoryAwareFunctionRegistry;
 import org.springframework.cloud.stream.binding.Bindable;
-import org.springframework.cloud.stream.config.BindingServiceProperties;
-import org.springframework.cloud.stream.messaging.DirectWithAttributesChannel;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.integration.channel.AbstractMessageChannel;
-import org.springframework.integration.channel.FluxMessageChannel;
-import org.springframework.lang.Nullable;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.ChannelInterceptor;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,10 +37,7 @@ public class DemoMessageChannelConfig {
     ApplicationContext applicationContext;
 
     @Autowired
-    GenericApplicationContext genericApplicationContext;
-
-    @Autowired
-    BindingServiceProperties bindingServiceProperties;
+    ConfigurableListableBeanFactory configurableListableBeanFactory;
 
     @Autowired
     DemoAspect demoAspect;
@@ -58,107 +52,111 @@ public class DemoMessageChannelConfig {
             return;
         }
 
-        scanMessageChannels();
-        scanReactiveMessageChannels();
-        scanFunctions();
+//        scanSupplierMessageChannels();
+//        scanConsumerFunctionsRegistry();
     }
 
-    void scanMessageChannels() {
-        String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
+    void scanSupplierMessageChannels() {
+        final String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
+        final List<String> outputChannelList = new ArrayList<>();
 
         for (String bindableBeanName:bindableBeanNames) {
             Bindable bindable = applicationContext.getBean(bindableBeanName, Bindable.class);
-
-            // scan all consumers
-            for (String binding:bindable.getInputs()) {
-                Object bindableBean = beanFactory.getBean(binding);
-                if (bindableBean instanceof AbstractMessageChannel) {
-                    AbstractMessageChannel abstractMessageChannel = (AbstractMessageChannel) bindableBean;
-                    LOGGER.debug("intercept consumer's channel name: {}", abstractMessageChannel.getBeanName());
-
-                    // add input interceptor
-                    abstractMessageChannel.addInterceptor(0, new ChannelInterceptor() {
-                        @Nullable
-                        @Override
-                        public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                            LOGGER.debug("input to: {}", abstractMessageChannel.getBeanName());
-                            LOGGER.debug("message id: {}", message.getHeaders().getId());
-                            return message;
-                        }
-                    });
-                }
-            }
 
             // scan all supplier
             for (String binding:bindable.getOutputs()) {
                 Object bindableBean = beanFactory.getBean(binding);
                 if (bindableBean instanceof AbstractMessageChannel) {
-                    DirectWithAttributesChannel directWithAttributesChannel = (DirectWithAttributesChannel) bindableBean;
-                    LOGGER.debug("intercept supplier's channel name: {}", directWithAttributesChannel.getBeanName());
-
-                    directWithAttributesChannel.setAttribute("test-key","test-value");
-                    directWithAttributesChannel.setFailover(false);
-
-                    // add output interceptor
-                    directWithAttributesChannel.addInterceptor(0, new ChannelInterceptor() {
-                        @Nullable
-                        @Override
-                        public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                            LOGGER.debug("output to: {}", directWithAttributesChannel.getBeanName());
-                            LOGGER.debug("message id: {}", message.getHeaders().getId());
-                            return message;
-                        }
-                    });
+                    AbstractMessageChannel AbstractMessageChannel = (AbstractMessageChannel) bindableBean;
+                    LOGGER.debug("supplier's channel name: {}", AbstractMessageChannel.getBeanName());
+                    outputChannelList.add(AbstractMessageChannel.getBeanName());
                 }
             }
         }
-    }
 
-    void scanReactiveMessageChannels() {
-        String [] reactiveChannels = applicationContext.getBeanNamesForType(FluxMessageChannel.class);
-        for (String reactiveChannel:reactiveChannels) {
-            Object reactiveChannelBean = beanFactory.getBean(reactiveChannel);
-            if (reactiveChannelBean instanceof FluxMessageChannel) {
-                FluxMessageChannel fluxMessageChannel = (FluxMessageChannel) reactiveChannelBean;
-                LOGGER.debug("intercept reactive channel name: {}", fluxMessageChannel.getBeanName());
-            }
+        if (outputChannelList.size()>0) {
+            createSuppliersProxyByOutputChannels(outputChannelList);
         }
     }
 
-    void scanFunctions() {
+
+    void createSuppliersProxyByOutputChannels(List<String> outputChannelList) {
+        if (outputChannelList.size() <= 0) return;
+
+        /**
+         * To intercept the message data, intercept the output channel
+         * instead of the supplier (get() function of supplier doesn't have input parameter)
+         */
+        String [] outputChannelNames = outputChannelList.toArray(new String[] {});
+        BeanNameAutoProxyCreator beanNameAutoProxyCreator = new BeanNameAutoProxyCreator();
+        beanNameAutoProxyCreator.setBeanNames(outputChannelNames); // output channel bean
+        Object supplierInterceptor = beanFactory.getBean("supplierInterceptor"); // throw Bean exception if not found
+
+        // Spring AOP is based around Around advice delivered via MethodInterceptor
+        beanNameAutoProxyCreator.setInterceptorNames("supplierInterceptor");
+
+        configurableListableBeanFactory.registerSingleton("supplierProxyCreator", beanNameAutoProxyCreator);
+    }
+
+    void scanConsumerFunctionsRegistry() {
         BeanFactoryAwareFunctionRegistry functionRegistry = (BeanFactoryAwareFunctionRegistry)applicationContext.getBean("functionCatalog");
 
-        LOGGER.debug("suppliers: {}", functionRegistry.getNames(Supplier.class));
-        int supplierTotal = functionRegistry.getNames(Supplier.class).size();
-
-        LOGGER.debug("consumers: {}", functionRegistry.getNames(Consumer.class));
-        int consumerTotal = functionRegistry.getNames(Consumer.class).size();
-
-        LOGGER.debug("functions: {}", functionRegistry.getNames(Function.class));
-        int functionTotal = functionRegistry.getNames(Function.class).size();
-
-        LOGGER.debug("function registry total: {}", functionRegistry.size());
-        LOGGER.debug("function count total: {}", (supplierTotal + consumerTotal + functionTotal));
-
         String [] suppliers = applicationContext.getBeanNamesForType(Supplier.class);
-        for (String functionName:suppliers) {
-            BeanFactoryAwareFunctionRegistry.FunctionInvocationWrapper invocationWrapper = functionRegistry.lookup(functionName);
-            Type functionType = invocationWrapper.getFunctionType();
-            boolean isSupplier = invocationWrapper.isSupplier();
+        LOGGER.debug("supplier functions: {}", Arrays.asList(suppliers));
 
-            Object functionBean = beanFactory.getBean(functionName);
-            LOGGER.debug("function class: {}", functionBean.getClass());
-        }
+        String [] processors = applicationContext.getBeanNamesForType(Function.class);
+        LOGGER.debug("processor functions: {}", Arrays.asList(processors));
 
         String [] consumers = applicationContext.getBeanNamesForType(Consumer.class);
-        for (String consumer:consumers) {
-            if (!consumer.equals("consumer0")) continue;
+        LOGGER.debug("consumer functions: {}", Arrays.asList(consumers));
 
-            Consumer consumerBean = (Consumer)beanFactory.getBean(consumer);
+        LOGGER.debug("function registry total: {}", functionRegistry.size());
+        LOGGER.debug("functions total: {}", (suppliers.length + consumers.length + processors.length));
+
+        for (String supplier:suppliers) {
+            BeanFactoryAwareFunctionRegistry.FunctionInvocationWrapper invocationWrapper = functionRegistry.lookup(supplier);
+            Type functionType = invocationWrapper.getFunctionType();
+            boolean isSupplier = invocationWrapper.isSupplier();
+            boolean isConsumer = invocationWrapper.isConsumer();
+
+            // locate the supplier's function bean
+            Object functionBean = beanFactory.getBean(supplier);
+            LOGGER.debug("function class: {}", functionBean.getClass().getName());
+            LOGGER.debug("function type: {}", functionType);
+            LOGGER.debug("is supplier? {}", isSupplier);
+            LOGGER.debug("is consumer? {}", isConsumer);
+        }
+
+        for (String processor:processors) {
+            BeanFactoryAwareFunctionRegistry.FunctionInvocationWrapper invocationWrapper = functionRegistry.lookup(processor);
+            Type functionType = invocationWrapper.getFunctionType();
+            boolean isSupplier = invocationWrapper.isSupplier();
+            boolean isConsumer = invocationWrapper.isConsumer();
+
+            // a consumer can also be a processor in case of composed functions
+            // locate the processor's function bean
+            Object functionBean = beanFactory.getBean(processor);
+            LOGGER.debug("function class: {}", functionBean.getClass().getName());
+            LOGGER.debug("function type: {}", functionType);
+            LOGGER.debug("is processor? {}", !isSupplier && !isConsumer);
+        }
+
+        for (String consumer:consumers) {
+            BeanFactoryAwareFunctionRegistry.FunctionInvocationWrapper invocationWrapper = functionRegistry.lookup(consumer);
+            Type functionType = invocationWrapper.getFunctionType();
+            boolean isSupplier = invocationWrapper.isSupplier();
+            boolean isConsumer = invocationWrapper.isConsumer();
+
+            // locate the consumer's function bean
+            Object functionBean = beanFactory.getBean(consumer);
+            LOGGER.debug("function class: {}", functionBean.getClass().getName());
+            LOGGER.debug("function type: {}", functionType);
+            LOGGER.debug("is supplier? {}", isSupplier);
+            LOGGER.debug("is consumer? {}", isConsumer);
 
             // dynamically register the bean with AOP proxy
             // create a factory that can generate a proxy for the given target object
-            AspectJProxyFactory factory = new AspectJProxyFactory(consumerBean);
+            AspectJProxyFactory factory = new AspectJProxyFactory(functionBean);
 
             factory.addAdvice(new MethodInterceptor() {
                 @Override

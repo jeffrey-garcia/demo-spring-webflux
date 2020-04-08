@@ -1,5 +1,6 @@
 package com.jeffrey.example.demospringwebflux;
 
+import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 @RunWith(JUnit4.class)
@@ -106,4 +108,38 @@ public class DemoTests {
             return throwable;
         }).onErrorStop();
     }
+
+    @Test
+    public void verifyFluxErrorHandle2() {
+        Flux<DemoEntity> inputFlux = Flux.just(
+                new DemoEntity("1"),
+                new DemoEntity("2"),
+                new DemoEntity("3"),
+                new DemoEntity("4")
+        );
+
+        Flux<DemoEntity> outputFlux = inputFlux.map(_demoEntity -> {
+            if (_demoEntity.getData().equals("3")) throw new RuntimeException("error!");
+            return _demoEntity;
+        });
+
+        RuntimeException runtimeException = new RuntimeException();
+        AtomicBoolean result = new AtomicBoolean(true);
+
+        outputFlux.onErrorMap(throwable -> {
+            result.set(false);
+            runtimeException.setStackTrace(throwable.getStackTrace());
+            return throwable;
+        })
+        .onErrorStop()
+        .map(value -> {
+            return true;
+        })
+        .onErrorReturn(false)
+        .subscribe()
+        .dispose();
+
+        Assert.assertEquals(false, result.get());
+    }
+
 }
