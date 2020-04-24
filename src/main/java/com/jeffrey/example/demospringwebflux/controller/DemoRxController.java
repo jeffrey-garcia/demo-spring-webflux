@@ -2,6 +2,8 @@ package com.jeffrey.example.demospringwebflux.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
+import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
+import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,10 @@ public class DemoRxController {
     @Autowired
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
+
+    @Autowired
+    @Qualifier("demoEntityEmitProcessorWithCallback")
+    EmitterProcessor<EmitterCallback<DemoEntity>> demoEntityEmitterProcessorWithCallback;
 
     @Autowired
     DemoRxService demoRxService;
@@ -71,14 +77,23 @@ public class DemoRxController {
      */
     @PostMapping(path = "/demoEntity")
     public Mono<ResponseEntity<DemoEntity>> createDemoEntityByJson(
+//    public Mono<List<DemoEntity>> createDemoEntityByJson(
             @RequestBody(required = false) DemoEntity demoEntity)
     {
         demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
 
-        // TODO: what happen if the emitter encounter exception?
-        demoEntityEmitterProcessor.onNext(demoEntity);
+        // TODO: will emitter encounter error and throw exception?
+//        demoEntityEmitterProcessor.onNext(demoEntity); // fire new data to the stream
+//        return Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).body(demoEntity));
 
-        return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(demoEntity));
+        return EmitterHandler.getInstance().emitDataAndCreateCallback(
+                demoEntityEmitterProcessor,
+                demoEntity
+        ).map(output -> {
+            return ResponseEntity.ok(output);
+        }).onErrorReturn(
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
+        );
     }
 
     /**

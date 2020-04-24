@@ -2,7 +2,10 @@ package com.jeffrey.example.demospringwebflux.bindings;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
+import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
+import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
+import com.jeffrey.example.demospringwebflux.service.DemoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanFactory;
@@ -28,6 +31,9 @@ public class DemoSupplier {
     private ObjectMapper jsonMapper;
 
     @Autowired
+    private DemoService demoService;
+
+    @Autowired
     private DemoRxService demoRxService;
 
     @Autowired
@@ -37,12 +43,43 @@ public class DemoSupplier {
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
 
+    @Autowired
+    @Qualifier("demoEntityEmitProcessorWithCallback")
+    EmitterProcessor<EmitterCallback<DemoEntity>> demoEntityEmitterProcessorWithCallback;
+
     /**
      * Produces (supplies) the continuous stream of messages and not an individual message.
      * triggered only once instead of periodically
      */
     @Bean
     public Supplier<Flux<Message<DemoEntity>>> supplierRx0() {
+//        return new Supplier<Flux<Message<DemoEntity>>>() {
+//            @Override
+//            public Flux<Message<DemoEntity>> get() {
+//                return demoEntityEmitterProcessorWithCallback
+//                .doOnNext(callback -> {
+//                    LOGGER.debug("rx0 - emitting entity: {}", callback.getInput().toString());
+//                    DemoEntity demoEntity = callback.getInput();
+//                    LOGGER.debug("rx0 - emitting entity: {}", demoEntity);
+//                    if (demoEntity.getData() == null)
+//                        throw new RuntimeException("error");
+//                    else
+//                        callback.output(demoEntity);
+//                })
+//                .onErrorContinue((throwable, callback) -> {
+//                    ((EmitterCallback<DemoEntity>) callback).error(throwable);
+//                })
+//                .map(callback -> {
+//                    DemoEntity demoEntity = callback.getInput();
+//                    Message<DemoEntity> message = MessageBuilder.withPayload(demoEntity).build();
+//                    LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
+//                    LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
+//                    callback.transformed(message);
+//                    return message;
+//                });
+//            }
+//        };
+
         return () -> {
             return demoEntityEmitterProcessor.doOnNext(_demoEntity -> {
                 LOGGER.debug("rx0 - emitting entity: {}", _demoEntity.toString());
@@ -50,6 +87,7 @@ public class DemoSupplier {
                 Message<DemoEntity> message = MessageBuilder.withPayload(_demoEntity).build();
                 LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
                 LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
+                EmitterHandler.getInstance().transform(_demoEntity, message);
                 return message;
             });
         };

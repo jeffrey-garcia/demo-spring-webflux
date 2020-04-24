@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import com.jeffrey.example.demospringwebflux.service.DemoService;
-import com.jeffrey.example.demospringwebflux.util.MonoResultWrapper;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -16,7 +15,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
 import org.springframework.util.Assert;
-import reactor.core.publisher.Mono;
 
 
 /**
@@ -75,105 +73,41 @@ public class DemoAspect {
 //        LOGGER.debug("intercept supplier - implementing class: {}", joinPoint.getTarget().getClass().getName());
 //    }
 
-    @Around("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethodWithArgumentMessage()")
-    @SuppressWarnings("unused")
-    public Object interceptAroundOutboundChannel(
-            ProceedingJoinPoint proceedingJoinPoint
-    ) throws Throwable
-    {
-        LOGGER.debug("intercept supplier - join point signature: {}", proceedingJoinPoint.getSignature());
-        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", proceedingJoinPoint.getSignature().getDeclaringType().getName());
-        LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
-        LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
-
-        // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
-        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
-        LOGGER.debug("intercept supplier - channel name: {}", channelName);
-        // TODO: verify of the channel is an output channel
-
-        Object[] args = proceedingJoinPoint.getArgs();
-        Assert.notNull(args, "argument must be provided for MessageChannel.send(Message<?> message)");
-        Assert.isTrue(args.length==1, "there must be only one argument for MessageChannel.send(Message<?> message)");
-        Assert.notNull(args[0], "argument value cannot be null for MessageChannel.send(Message<?> message)");
-        Assert.isTrue(args[0] instanceof org.springframework.messaging.Message<?>, "argument must be of type org.springframework.messaging.Message<?>");
-        Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
-        Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
-
-        // payload conversion to entity before saving to DB
-        Message<?> message = (Message<?>) args[0];
-        byte [] bytes = (byte[])message.getPayload();
-        String jsonString = new String(bytes);
-        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
-
-        LOGGER.debug("saving entity to DB: {}", jsonString);
-
-        // this will create a blocking behavior which defeats the rationale of reactive programming
-        // thus facilitate guarantee of atomic behavior for write DB and send message to broker
+//    @Around("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethodWithArgumentMessage()")
+//    @SuppressWarnings("unused")
+//    public Object interceptAroundOutboundChannel(
+//            ProceedingJoinPoint proceedingJoinPoint
+//    ) throws Throwable
+//    {
+//        LOGGER.debug("intercept supplier - join point signature: {}", proceedingJoinPoint.getSignature());
+//        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", proceedingJoinPoint.getSignature().getDeclaringType().getName());
+//        LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
+//        LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
+//
+//        // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
+//        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
+//        LOGGER.debug("intercept supplier - channel name: {}", channelName);
+//        // TODO: verify of the channel is an output channel
+//
+//        Object[] args = proceedingJoinPoint.getArgs();
+//        Assert.notNull(args, "argument must be provided for MessageChannel.send(Message<?> message)");
+//        Assert.isTrue(args.length==1, "there must be only one argument for MessageChannel.send(Message<?> message)");
+//        Assert.notNull(args[0], "argument value cannot be null for MessageChannel.send(Message<?> message)");
+//        Assert.isTrue(args[0] instanceof org.springframework.messaging.Message<?>, "argument must be of type org.springframework.messaging.Message<?>");
+//        Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
+//        Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
+//
+//        // payload conversion to entity before saving to DB
+//        Message<?> message = (Message<?>) args[0];
+//        byte [] bytes = (byte[])message.getPayload();
+//        String jsonString = new String(bytes);
+//        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
+//
+//        LOGGER.debug("saving entity to DB: {}", jsonString);
+//
+//        // guarantees atomic behavior for write DB and send message to broker
+//        // cannot propagate database write error back to controllers
 //        demoService.createDemoEntity(demoEntity);
-
-        // this is non-blocking but cannot propagate database write error back to controller
-        MonoResultWrapper<Object> resultWrapper = new MonoResultWrapper<>();
-
-        Mono<Boolean> resultMono = executeJoinPoint(writeEntity(demoEntity, resultWrapper), proceedingJoinPoint, resultWrapper);
-        resultMono.subscribe();
-
-        if (resultWrapper.getThrowable()!=null) {
-            throw resultWrapper.getThrowable();
-        }
-        return resultWrapper.getResult();
-    }
-
-    private Mono<Boolean> writeEntity(
-            DemoEntity demoEntity,
-            MonoResultWrapper resultWrapper)
-    {
-        return Mono.just(demoEntity)
-                .map(_demoEntity -> {
-                    demoRxService.createDemoEntity(demoEntity).subscribe();
-                    return _demoEntity;
-                })
-                .onErrorMap(throwable -> {
-                    resultWrapper.setThrowable(throwable);
-                    return throwable;
-                })
-                .map(value -> {
-                    return true;
-                })
-                .onErrorReturn(
-                    false
-                )
-                .onErrorStop();
-    }
-
-    private Mono<Boolean> executeJoinPoint(
-            Mono<Boolean> mono,
-            ProceedingJoinPoint proceedingJoinPoint,
-            MonoResultWrapper resultWrapper)
-    {
-        return mono
-                .map(writeDbResult -> {
-                    LOGGER.debug("write DB result: {}", writeDbResult);
-                    if (writeDbResult) {
-                        try {
-                            Object object = proceedingJoinPoint.proceed();
-                            resultWrapper.setResult(object);
-                        } catch (Throwable throwable) {
-                            throw new RuntimeException(throwable);
-                        }
-                    }
-                    return writeDbResult;
-                })
-                .onErrorMap(throwable -> {
-                    resultWrapper.setThrowable(throwable);
-                    return throwable;
-                })
-                .map(value -> {
-                    return value;
-                })
-                .onErrorReturn(
-                    false
-                )
-                .onErrorStop();
-    }
-
+//        return proceedingJoinPoint.proceed();
+//    }
 }

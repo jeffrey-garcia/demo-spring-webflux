@@ -7,6 +7,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import reactor.core.Disposable;
+import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -140,6 +142,82 @@ public class DemoTests {
         .dispose();
 
         Assert.assertEquals(false, result.get());
+    }
+
+    @Test
+    public void verifyEmitProcessor() {
+        EmitterProcessor<DemoEntity> emitterProcessor = EmitterProcessor.create();
+
+        Flux<DemoEntity> flux1 = emitterProcessor.doOnNext(demoEntity -> {
+            System.out.println("@@@: " + demoEntity);
+        }).map(demoEntity -> {
+            return demoEntity;
+        });
+
+        /**
+         * if we subscribe the flux 2 times, the task defined when each data comes in will be fired 2 times!
+         */
+        Disposable subscription1 = flux1.subscribe();
+        Disposable subscription2 = flux1.subscribe();
+
+        emitterProcessor.onNext(new DemoEntity(null));
+
+        subscription1.dispose();
+        subscription2.dispose();
+    }
+
+    @Test
+    public void verifyEmitProcessorWithDownStreamError() {
+        EmitterProcessor<DemoEntity> emitterProcessor = EmitterProcessor.create();
+
+        Flux<DemoEntity> flux1 = emitterProcessor.doOnNext(demoEntity -> {
+            System.out.println(demoEntity);
+        }).map(demoEntity -> {
+            return demoEntity;
+        });
+
+        Disposable subscription1 = flux1.map(demoEntity -> {
+            throw new RuntimeException("error");
+        })
+        .onErrorResume(throwable -> {
+            return Flux.error(throwable);
+        })
+        .subscribe(
+            /**
+             * if we throw error within the transformed flux
+             * we need to handle it at the subscriber level which
+             * will terminate the flux stream
+             */
+            value -> System.out.println("yay"),
+            error -> System.out.println("shit")
+        );
+
+        emitterProcessor.onNext(new DemoEntity(null));
+        emitterProcessor.onNext(new DemoEntity(null));
+
+        subscription1.dispose();
+    }
+
+    @Test
+    public void verifyEmitProcessorWithError() {
+        EmitterProcessor<DemoEntity> emitterProcessor = EmitterProcessor.create();
+
+        Flux<DemoEntity> flux1 = emitterProcessor.doOnNext(demoEntity -> {
+            if (demoEntity.getData() == null)
+                throw new RuntimeException("error");
+        })
+        .onErrorContinue((throwable, value) -> {
+            // skip the error data without terminating the stream processing
+        });
+
+        Disposable subscription1 = flux1.subscribe(
+            value -> System.out.println(value)
+        );
+
+        emitterProcessor.onNext(new DemoEntity(null));
+        emitterProcessor.onNext(new DemoEntity("test"));
+
+        subscription1.dispose();
     }
 
 }

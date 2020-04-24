@@ -1,7 +1,7 @@
 package com.jeffrey.example.demospringwebflux.bindings;
 
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
-import com.jeffrey.example.demospringwebflux.util.DemoConsumerAdviceInvocator;
+import com.jeffrey.example.demospringwebflux.aop.DemoConsumerAdviceInvocator;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

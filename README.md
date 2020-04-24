@@ -176,14 +176,17 @@ applications.
 ##### Project Reactor
 - [Reactor 3 Reference Guide](http://projectreactor.io/docs/core/release/reference/)
 - [Reactor Flux API](https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html)
+- [Reactor Error Handling](https://projectreactor.io/docs/core/release/reference/#error.handling)
+- [Reactor Scheduler](https://projectreactor.io/docs/core/release/api/reactor/core/scheduler/Schedulers.html)
 
 ##### Spring Cloud Stream (SCSt)
-- [SCSt - Demystified and Simplified](https://spring.io/blog/2019/10/14/spring-cloud-stream-demystified-and-simplified)
-- [SCSt - Functional and Reactive](https://spring.io/blog/2019/10/17/spring-cloud-stream-functional-and-reactive)
-- [Event Driven Microservices with SCSt](https://spring.io/blog/2019/10/15/simple-event-driven-microservices-with-spring-cloud-stream)
-- [Event Routing with Functions](https://spring.io/blog/2019/10/31/spring-cloud-stream-event-routing)
-- [Spring Cloud Stream - Reactive Functions Support](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_reactive_functions_support)
-- [Spring Cloud Stream - Event Routing](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_event_routing)
+- [SCSt Blog - Demystified and Simplified](https://spring.io/blog/2019/10/14/spring-cloud-stream-demystified-and-simplified)
+- [SCSt Blog - Functional and Reactive](https://spring.io/blog/2019/10/17/spring-cloud-stream-functional-and-reactive)
+- [SCSt Blog - Event Driven Microservices with SCSt](https://spring.io/blog/2019/10/15/simple-event-driven-microservices-with-spring-cloud-stream)
+- [SCSt Blog - Event Routing with Functions](https://spring.io/blog/2019/10/31/spring-cloud-stream-event-routing)
+- [SCSt - Reactive Functions Support](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_reactive_functions_support)
+- [SCSt - Event Routing](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/current/reference/html/spring-cloud-stream.html#_event_routing)
+- [SCSt - Foreign Driven Event Source](https://cloud.spring.io/spring-cloud-static/spring-cloud-stream/3.0.3.RELEASE/reference/html/spring-cloud-stream.html#_foreign_event_driven_sources)
 
 ##### Spring Cloud Function
 - [Spring Cloud Function - Reference Guide](https://cloud.spring.io/spring-cloud-function/reference/html/spring-cloud-function.html#_introduction)
