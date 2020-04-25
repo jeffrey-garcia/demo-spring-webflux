@@ -115,7 +115,7 @@ public class DemoController {
          * than I/O intensive).
          *
          * Parallel scheduler is primarily designed for CPU bound tasks, meaning its limited
-         * by the max number of CPU cores. In this case, it's like setting your threadpool size
+         * by the max number of CPU cores. In this case, it's like setting your thread pool size
          * to the number of cores on a regular Servlet container. As such the app won't be able
          * to process a large number of concurrent requests.
          *

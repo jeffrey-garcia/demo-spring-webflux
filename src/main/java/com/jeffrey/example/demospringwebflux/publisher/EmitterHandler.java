@@ -1,89 +1,84 @@
 package com.jeffrey.example.demospringwebflux.publisher;
 
 
-import com.google.common.collect.MapMaker;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.messaging.Message;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.EmitterProcessor;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.MonoProcessor;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
-public final class EmitterHandler<T> {
+public final class EmitterHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(EmitterHandler.class);
 
-    public static EmitterHandler getInstance() {
-        return LazyLoader.instance;
-    }
+    private static final Map<? super Object, Callback<? super Object>> emitterInputCallbacks = Maps.newConcurrentMap();
+    private static final Map<? super Object, Callback<? super Object>> emitterOutputCallbacks = Maps.newConcurrentMap();
 
-    private static class LazyLoader {
-        private static final EmitterHandler instance = new EmitterHandler();
-    }
-
-    EmitterHandler() {};
-
-//    private final Set<EmitterCallback<?>> emitterCallbacks = Sets.newConcurrentHashSet();
-    private final Map<T, EmitterCallback<?>> emitterInputCallbacks = Maps.newConcurrentMap();
-    private final Map<Message<T>, EmitterCallback<?>> emitterOutputCallbacks = Maps.newConcurrentMap();
-
-    public static <T> EmitterCallback <T> emits(EmitterProcessor<EmitterCallback<T>> emitterProcessor, T data) {
-        EmitterCallback<T> _callback = new EmitterCallback<>(data);
-        emitterProcessor.onNext(_callback);
-        return _callback;
-    }
-
-    public EmitterCallback<?> emitDataAndCreateCallback(EmitterProcessor<T> emitterProcessor, T sourceData) {
-        EmitterCallback<?> _callback = new EmitterCallback<>(sourceData);
-//        emitterCallbacks.add(_callback);
-        emitterInputCallbacks.put(sourceData, _callback);
+    public static <T> Callback<?> create(EmitterProcessor<T> emitterProcessor, T sourceData) {
+        Callback<? super Object> callback = new Callback<>(sourceData);
+        emitterInputCallbacks.put(sourceData, callback);
         emitterProcessor.onNext(sourceData);
-        return _callback;
+        return callback;
     }
 
-    private Optional<EmitterCallback<?>> findCallbackWithInputData(T sourceData) {
+    private static <T> Optional<Callback<? super Object>> findCallbackWithInputData(T sourceData) {
         return Optional.ofNullable(emitterInputCallbacks.remove(sourceData));
-//        return emitterCallbacks.stream().filter(callback -> {
-//            return (callback.getInput()!=null && callback.getInput().equals((sourceData)));
-//        }).findFirst();
     }
 
-    public void transform(T sourceData, Message<T> transformedData) {
+    public static <T,R> void transform(T sourceData, R transformedData) {
         findCallbackWithInputData(sourceData).ifPresent(callback -> {
-            EmitterCallback<T> emitterCallback = ((EmitterCallback<T>)callback);
             LOGGER.debug("transform data: {}", transformedData);
-//            emitterCallback.transform(transformedData);
-            emitterOutputCallbacks.put(transformedData, emitterCallback);
+            emitterOutputCallbacks.put(transformedData, callback);
         });
     }
 
-    private Optional<EmitterCallback<?>> findCallbackWithTransformedData(Message<T> transformedData) {
+    private static <R> Optional<Callback<? super Object>> findCallbackWithTransformedData(R transformedData) {
         return Optional.ofNullable(emitterOutputCallbacks.remove(transformedData));
-//        return emitterCallbacks.stream().filter(callback -> {
-//            return (callback.getTransformed()!=null && callback.getTransformed().equals((transformedData)));
-//        }).findFirst();
     }
 
-    public void notifySuccess(Message<T> transformedData) {
+    public static <R> void notifySuccess(R transformedData) {
         findCallbackWithTransformedData(transformedData).ifPresent(callback -> {
-            EmitterCallback<T> emitterCallback = ((EmitterCallback<T>)callback);
-            T sourceData = emitterCallback.getInput();
+            Object sourceData = callback.getInput();
             LOGGER.debug("notify success: {}", sourceData);
-            emitterCallback.output(sourceData);
-//            emitterCallbacks.remove(emitterCallback);
+            callback.output(sourceData);
         });
     }
 
-    public void notifyFail(Message<T> transformedData, Throwable throwable) {
+    public static <R> void notifyFail(R transformedData, Throwable throwable) {
         findCallbackWithTransformedData(transformedData).ifPresent(callback -> {
-            LOGGER.debug("notify fail: {}", throwable.getMessage());
-            EmitterCallback<T> emitterCallback = ((EmitterCallback<T>)callback);
-            emitterCallback.error(throwable);
-//            emitterCallbacks.remove(emitterCallback);
+            LOGGER.error("notify fail: {}", throwable.getMessage());
+            callback.error(throwable);
         });
+    }
+
+    public static final class Callback<E> {
+        private final E sourceData;
+        private final MonoProcessor<E> monoProcessor;
+
+        Callback(E sourceData) {
+            this.sourceData = sourceData;
+            this.monoProcessor = MonoProcessor.create();
+        }
+
+        private E getInput() {
+            return sourceData;
+        }
+
+        private void output(E resultData) {
+            monoProcessor.onNext(resultData);
+        }
+
+        private void error(Throwable throwable) {
+            monoProcessor.onError(throwable);
+        }
+
+        public <R> Mono<R> map(Function<? super E, ? extends R> mapper) {
+            return monoProcessor.map(mapper);
+        }
     }
 
 }

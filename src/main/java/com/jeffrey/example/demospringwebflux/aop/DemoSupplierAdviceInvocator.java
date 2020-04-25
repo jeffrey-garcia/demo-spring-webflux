@@ -6,33 +6,28 @@ import com.jeffrey.example.demospringwebflux.service.DemoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
+import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
 public class DemoSupplierAdviceInvocator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoSupplierAdviceInvocator.class);
 
     public static Flux<?> invokeReactive(Flux<?> outputFlux, DemoService demoService) {
-//        return outputFlux.doOnNext(value -> {
-//            LOGGER.debug("intercepting stream of data: {}", value);
-//            throw new RuntimeException("error intercepting supplier's output");
-//        });
-
         return outputFlux.map(value -> {
             LOGGER.debug("intercepting stream of data: {}", value);
-//            throw new RuntimeException("error intercepting supplier's output");
-//            return value;
-
-            DemoEntity demoEntity = ((Message<DemoEntity>) value).getPayload();
             try {
+                Assert.notNull(value, "value must not be null");
+                Assert.isTrue(value instanceof Message<?>, "value must be instance of message");
+                Assert.isTrue(((Message<?>)value).getPayload() instanceof DemoEntity, "value must be instance of DemoEntity");
+
+                DemoEntity demoEntity = ((Message<DemoEntity>) value).getPayload();
                 demoService.createDemoEntity(demoEntity);
-                EmitterHandler.getInstance().notifySuccess((Message<?>)value);
+                EmitterHandler.notifySuccess(value);
             } catch (Throwable throwable) {
-                EmitterHandler.getInstance().notifyFail((Message<?>)value, throwable);
+                EmitterHandler.notifyFail(value, throwable);
                 throw throwable;
             }
-
             return value;
-
         })
         .onErrorContinue((throwable, o) -> {
             LOGGER.error("error: {} encountered while processing: {}", throwable, o);

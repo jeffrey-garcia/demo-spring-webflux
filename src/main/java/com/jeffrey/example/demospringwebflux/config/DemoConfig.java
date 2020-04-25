@@ -2,7 +2,6 @@ package com.jeffrey.example.demospringwebflux.config;
 
 import com.jeffrey.example.demospringwebflux.aop.DemoAspect;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
-import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,11 +39,6 @@ public class DemoConfig {
 
     @Bean(name = "demoEntityEmitProcessor")
     public EmitterProcessor<DemoEntity> demoEntityEmitProcessor() {
-        return EmitterProcessor.create();
-    }
-
-    @Bean(name = "demoEntityEmitProcessorWithCallback")
-    EmitterProcessor<EmitterCallback<DemoEntity>> demoEntityEmitterProcessorWithCallback() {
         return EmitterProcessor.create();
     }
 

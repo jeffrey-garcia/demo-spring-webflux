@@ -2,7 +2,6 @@ package com.jeffrey.example.demospringwebflux.bindings;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
-import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
 import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import com.jeffrey.example.demospringwebflux.service.DemoService;
@@ -42,10 +41,6 @@ public class DemoSupplier {
     @Autowired
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
-
-    @Autowired
-    @Qualifier("demoEntityEmitProcessorWithCallback")
-    EmitterProcessor<EmitterCallback<DemoEntity>> demoEntityEmitterProcessorWithCallback;
 
     /**
      * Produces (supplies) the continuous stream of messages and not an individual message.
@@ -87,7 +82,7 @@ public class DemoSupplier {
                 Message<DemoEntity> message = MessageBuilder.withPayload(_demoEntity).build();
                 LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
                 LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
-                EmitterHandler.getInstance().transform(_demoEntity, message);
+                EmitterHandler.transform(_demoEntity, message);
                 return message;
             });
         };

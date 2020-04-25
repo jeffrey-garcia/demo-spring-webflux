@@ -1,13 +1,15 @@
 package com.jeffrey.example.demospringwebflux;
 
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
-import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
 import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Mono;
@@ -18,31 +20,38 @@ public class DemoEmitterTests {
 
     @Test
     public void verifyMonoProcessor() {
-        EmitterProcessor<EmitterCallback<DemoEntity>> emitterProcessor = EmitterProcessor.create();
+        EmitterProcessor<DemoEntity> emitterProcessor = EmitterProcessor.create();
 
-        emitterProcessor.doOnNext(callback -> {
-            DemoEntity demoEntity = callback.getInput();
+        emitterProcessor.doOnNext(demoEntity -> {
+            Message<DemoEntity> message = MessageBuilder.withPayload(demoEntity).build();
+            EmitterHandler.transform(demoEntity, message);
+
             if (demoEntity.getData() == null)
-                throw new RuntimeException("error");
-            else
-                callback.output(demoEntity);
-        }).onErrorContinue(((throwable, o) -> {
-            ((EmitterCallback<DemoEntity>)o).error(throwable);
-        })).subscribe();
+                EmitterHandler.notifyFail(message, new RuntimeException("demo entity data is null"));
+            else {
+                EmitterHandler.notifySuccess(message);
+            }
+        }).subscribe();
 
-        Mono<ResponseEntity<DemoEntity>> responseEntityMono = EmitterHandler.emits(
+//        DemoEntity demoEntity = new DemoEntity("testing");
+        DemoEntity demoEntity = new DemoEntity(null);
+
+        Mono<ResponseEntity<DemoEntity>> responseEntityMono = EmitterHandler.create(
                 emitterProcessor,
-//                new DemoEntity(null)
-                new DemoEntity("testing")
+                demoEntity
         ).map(output -> {
-            return ResponseEntity.ok(output);
+            return ResponseEntity.ok((DemoEntity)output);
         }).onErrorReturn(
-            ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build()
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         );
 
-        Disposable subscription = responseEntityMono.subscribe(
-            responseEntity -> System.out.println(responseEntity.getStatusCode())
-        );
+        Disposable subscription = responseEntityMono.subscribe(responseEntity -> {
+            if (demoEntity.getData()!=null) {
+                Assert.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            } else {
+                Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+            }
+        });
 
         subscription.dispose();
     }

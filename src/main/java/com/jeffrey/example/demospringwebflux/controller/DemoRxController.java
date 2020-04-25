@@ -2,7 +2,6 @@ package com.jeffrey.example.demospringwebflux.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
-import com.jeffrey.example.demospringwebflux.publisher.EmitterCallback;
 import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import org.slf4j.Logger;
@@ -32,10 +31,6 @@ public class DemoRxController {
     @Autowired
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
-
-    @Autowired
-    @Qualifier("demoEntityEmitProcessorWithCallback")
-    EmitterProcessor<EmitterCallback<DemoEntity>> demoEntityEmitterProcessorWithCallback;
 
     @Autowired
     DemoRxService demoRxService;
@@ -86,12 +81,15 @@ public class DemoRxController {
 //        demoEntityEmitterProcessor.onNext(demoEntity); // fire new data to the stream
 //        return Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).body(demoEntity));
 
-        return EmitterHandler.getInstance().emitDataAndCreateCallback(
+        // handle if emitter and downstream encounter error
+        return EmitterHandler.create(
                 demoEntityEmitterProcessor,
                 demoEntity
-        ).map(output -> {
-            return ResponseEntity.ok(output);
-        }).onErrorReturn(
+        )
+        .map(output -> {
+            return ResponseEntity.ok((DemoEntity)output);
+        })
+        .onErrorReturn(
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         );
     }

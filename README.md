@@ -113,8 +113,8 @@ a boundary. If a publisher cannot slow down, it has to decide whether
 to buffer, drop, or fail.
 ```
 
-If you can free up threads ((and thus free up the thread they’re 
-utilising)) faster than new requests arrive, and the time spent in 
+If you can free up threads (and thus free up the thread they’re 
+utilising) faster than new requests arrive, and the time spent in 
 those threads is mostly due to input/output, great! There's possibly 
 no need for reactive programming.
 
@@ -153,7 +153,7 @@ would not be making the most of a non-blocking web stack.
 WebFlux (or generally reactive and non-blocking framework) CANNOT make
 applications run faster. It can, in some cases, (for example, if using
 the WebClient to execute remote calls in parallel). Overall speaking,
-WebFlix requires more work to do things the non-blocking way and that
+WebFlux requires more work to do things the non-blocking way and that
 can increase slightly the required processing time.
 
 WebFlux also requires a different programming paradigm and a new approach
