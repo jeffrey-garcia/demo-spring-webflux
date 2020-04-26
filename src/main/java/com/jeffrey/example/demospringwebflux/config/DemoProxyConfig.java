@@ -156,8 +156,8 @@ public class DemoProxyConfig {
          */
 //        final String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
 
-        final String[] supplierBeanNames = applicationContext.getBeanNamesForType(Supplier.class);
-        beanNameAutoProxyCreator.setBeanNames("supplierRx0"); // supplier bean
+        final String[] suppliers = applicationContext.getBeanNamesForType(Supplier.class);
+        beanNameAutoProxyCreator.setBeanNames(suppliers); // supplier bean
 
         // Spring AOP is based around Around advice delivered via MethodInterceptor
 //        beanNameAutoProxyCreator.setInterceptorNames("supplierChannelInterceptor");

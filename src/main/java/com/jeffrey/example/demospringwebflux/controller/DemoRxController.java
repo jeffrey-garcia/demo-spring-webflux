@@ -103,7 +103,7 @@ public class DemoRxController {
         })
         .timeout(
             // define timeout to avoid blocking the server if response can't be produced timely
-            Duration.ofMillis(1000)
+            Duration.ofMillis(5000)
         )
         .map(output -> {
             // successful result handle
