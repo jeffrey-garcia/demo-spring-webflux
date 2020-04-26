@@ -143,9 +143,6 @@ public class DemoProxyConfig {
     public BeanNameAutoProxyCreator supplierProxyCreator() {
         BeanNameAutoProxyCreator beanNameAutoProxyCreator = new BeanNameAutoProxyCreator();
 
-        final String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
-        final String[] supplierBeanNames = applicationContext.getBeanNamesForType(Supplier.class);
-
         /**
          * To intercept the message data, intercept the output channel instead of the Supplier,
          * Supplier's get() function doesn't have input parameter.
@@ -157,7 +154,10 @@ public class DemoProxyConfig {
          * Lookup through binding configurations is also not an option since we can't dictate
          * the bindings is an input or output channel until the channel is created.
          */
-        beanNameAutoProxyCreator.setBeanNames("supplierRx0"); // output channel bean
+//        final String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
+
+        final String[] supplierBeanNames = applicationContext.getBeanNamesForType(Supplier.class);
+        beanNameAutoProxyCreator.setBeanNames("supplierRx0"); // supplier bean
 
         // Spring AOP is based around Around advice delivered via MethodInterceptor
 //        beanNameAutoProxyCreator.setInterceptorNames("supplierChannelInterceptor");

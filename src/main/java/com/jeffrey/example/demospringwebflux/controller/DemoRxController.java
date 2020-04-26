@@ -15,10 +15,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +66,7 @@ public class DemoRxController {
             @RequestParam(value="sortBy", required=false, defaultValue="") String sortBy)
             throws JsonProcessingException
     {
+        LOGGER.debug("/demoEntities");
         return demoRxService.readAllDemoEntities(sortBy);
     }
 
@@ -72,24 +76,41 @@ public class DemoRxController {
      */
     @PostMapping(path = "/demoEntity")
     public Mono<ResponseEntity<DemoEntity>> createDemoEntityByJson(
-//    public Mono<List<DemoEntity>> createDemoEntityByJson(
             @RequestBody(required = false) DemoEntity demoEntity)
     {
-        demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
+        LOGGER.debug("/demoEntity: {}", demoEntity);
+        final DemoEntity _demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
 
-        // TODO: will emitter encounter error and throw exception?
-//        demoEntityEmitterProcessor.onNext(demoEntity); // fire new data to the stream
-//        return Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).body(demoEntity));
+        // Emitter may encounter error and a successful response will always be returned
+//        demoEntityEmitterProcessor.onNext(_demoEntity); // fire new data to the stream
+//        return Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).body(_demoEntity));
 
-        // handle if emitter and downstream encounter error
-        return EmitterHandler.create(
-                demoEntityEmitterProcessor,
-                demoEntity
+        /**
+         * handle if emitter and downstream encounter error
+         **/
+        // create the callback
+        Mono<?> callback = EmitterHandler.create(_demoEntity);
+
+        // subscribe the callback
+        Disposable subscription = callback.subscribeOn(Schedulers.boundedElastic()).subscribe();
+
+        return callback.doOnSubscribe(_subscription -> {
+            // start publishing data after subscribed
+            demoEntityEmitterProcessor.onNext(_demoEntity);
+        }).doFinally(output -> {
+            // dispose the subcription when finish
+            subscription.dispose();
+        })
+        .timeout(
+            // define timeout to avoid blocking the server if response can't be produced timely
+            Duration.ofMillis(1000)
         )
         .map(output -> {
+            // successful result handle
             return ResponseEntity.ok((DemoEntity)output);
         })
         .onErrorReturn(
+            // failure result handle
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
         );
     }

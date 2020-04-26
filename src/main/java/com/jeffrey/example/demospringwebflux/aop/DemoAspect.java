@@ -2,6 +2,7 @@ package com.jeffrey.example.demospringwebflux.aop;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeffrey.example.demospringwebflux.entity.DemoEntity;
+import com.jeffrey.example.demospringwebflux.publisher.EmitterHandler;
 import com.jeffrey.example.demospringwebflux.service.DemoRxService;
 import com.jeffrey.example.demospringwebflux.service.DemoService;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -73,41 +74,52 @@ public class DemoAspect {
 //        LOGGER.debug("intercept supplier - implementing class: {}", joinPoint.getTarget().getClass().getName());
 //    }
 
-//    @Around("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethodWithArgumentMessage()")
-//    @SuppressWarnings("unused")
-//    public Object interceptAroundOutboundChannel(
-//            ProceedingJoinPoint proceedingJoinPoint
-//    ) throws Throwable
-//    {
+    @Around("targetClassIsDirectWithAttributesChannel() && targetClassImplementsMessageChannelSendMethodWithArgumentMessage()")
+    @SuppressWarnings("unused")
+    public Object interceptAroundOutboundChannel(
+            ProceedingJoinPoint proceedingJoinPoint
+    ) throws Throwable
+    {
 //        LOGGER.debug("intercept supplier - join point signature: {}", proceedingJoinPoint.getSignature());
 //        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", proceedingJoinPoint.getSignature().getDeclaringType().getName());
 //        LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
 //        LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
-//
-//        // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
-//        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
-//        LOGGER.debug("intercept supplier - channel name: {}", channelName);
-//        // TODO: verify of the channel is an output channel
-//
-//        Object[] args = proceedingJoinPoint.getArgs();
-//        Assert.notNull(args, "argument must be provided for MessageChannel.send(Message<?> message)");
-//        Assert.isTrue(args.length==1, "there must be only one argument for MessageChannel.send(Message<?> message)");
-//        Assert.notNull(args[0], "argument value cannot be null for MessageChannel.send(Message<?> message)");
-//        Assert.isTrue(args[0] instanceof org.springframework.messaging.Message<?>, "argument must be of type org.springframework.messaging.Message<?>");
-//        Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
-//        Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
-//
-//        // payload conversion to entity before saving to DB
-//        Message<?> message = (Message<?>) args[0];
-//        byte [] bytes = (byte[])message.getPayload();
-//        String jsonString = new String(bytes);
-//        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
-//
-//        LOGGER.debug("saving entity to DB: {}", jsonString);
-//
-//        // guarantees atomic behavior for write DB and send message to broker
-//        // cannot propagate database write error back to controllers
+
+        // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
+        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
+        LOGGER.debug("intercept supplier - channel name: {}", channelName);
+        // TODO: verify of the channel is an output channel
+
+        Object[] args = proceedingJoinPoint.getArgs();
+        Assert.notNull(args, "argument must be provided for MessageChannel.send(Message<?> message)");
+        Assert.isTrue(args.length==1, "there must be only one argument for MessageChannel.send(Message<?> message)");
+        Assert.notNull(args[0], "argument value cannot be null for MessageChannel.send(Message<?> message)");
+        Assert.isTrue(args[0] instanceof org.springframework.messaging.Message<?>, "argument must be of type org.springframework.messaging.Message<?>");
+        Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
+        Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
+
+        // payload conversion to entity before saving to DB
+        Message<?> message = (Message<?>) args[0];
+        byte [] bytes = (byte[])message.getPayload();
+        String jsonString = new String(bytes);
+        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
+
+        LOGGER.debug("saving entity to DB: {}", jsonString);
+
+        // guarantees atomic behavior for write DB and send message to broker
+        // cannot propagate database write error back to controllers
+        // guarantee
 //        demoService.createDemoEntity(demoEntity);
 //        return proceedingJoinPoint.proceed();
-//    }
+
+        try {
+            demoService.createDemoEntity(demoEntity);
+            Object result = proceedingJoinPoint.proceed();
+            EmitterHandler.notifySuccess(message);
+            return result;
+        } catch (Throwable throwable) {
+            EmitterHandler.notifyFail(message, throwable);
+            throw throwable;
+        }
+    }
 }

@@ -15,6 +15,8 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
+import java.util.UUID;
+
 @RunWith(JUnit4.class)
 public class DemoEmitterTests {
 
@@ -23,7 +25,10 @@ public class DemoEmitterTests {
         EmitterProcessor<DemoEntity> emitterProcessor = EmitterProcessor.create();
 
         emitterProcessor.doOnNext(demoEntity -> {
-            Message<DemoEntity> message = MessageBuilder.withPayload(demoEntity).build();
+            Message<DemoEntity> message = MessageBuilder
+                    .withPayload(demoEntity)
+                    .setHeader("eventId", UUID.randomUUID().toString())
+                    .build();
             EmitterHandler.transform(demoEntity, message);
 
             if (demoEntity.getData() == null)
@@ -33,13 +38,13 @@ public class DemoEmitterTests {
             }
         }).subscribe();
 
-//        DemoEntity demoEntity = new DemoEntity("testing");
-        DemoEntity demoEntity = new DemoEntity(null);
+        DemoEntity demoEntity = System.currentTimeMillis()%2 == 0 ? new DemoEntity("testing"):new DemoEntity(null);
+        Mono<?> callback = EmitterHandler.create(demoEntity);
 
-        Mono<ResponseEntity<DemoEntity>> responseEntityMono = EmitterHandler.create(
-                emitterProcessor,
-                demoEntity
-        ).map(output -> {
+        // fire the data after the callback is subscribed
+        emitterProcessor.onNext(demoEntity);
+
+        Mono<ResponseEntity<DemoEntity>> responseEntityMono = callback.map(output -> {
             return ResponseEntity.ok((DemoEntity)output);
         }).onErrorReturn(
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
@@ -52,6 +57,8 @@ public class DemoEmitterTests {
                 Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
             }
         });
+
+        // TODO: verify if the subscriber has been fired once
 
         subscription.dispose();
     }
