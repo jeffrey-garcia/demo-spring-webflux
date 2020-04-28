@@ -3,12 +3,12 @@ spring:
   cloud:
     function:
       # control which function method in our code will be triggered if there are multiple
-      definition: supplierRx0;consumerRx0;
+#      definition: supplierRx0;consumerRx0;
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;
 #      definition: supplierRx0;consumerRx0;supplier0;consumer0;
-#      definition: supplierRx0;consumerRx0;supplier2;consumer2;
+      definition: supplierRx0;consumerRx0;supplier2;consumer2;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
 #      definition: supplier1|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;
@@ -88,14 +88,14 @@ spring:
 #          destination: demoComp-exchange-rx0
 #          group: demoComp-queue-rx0
 #          binder: local_rabbit
-#        supplier2-out-0:
-#          destination: demofunc-exchange-2
-#          group: demofunc-queue-2
-#          binder: local_rabbit
-#        consumer2-in-0:
-#          destination: demofunc-exchange-2
-#          group: demofunc-queue-2
-#          binder: local_rabbit
+        supplier2-out-0:
+          destination: demofunc-exchange-2
+          group: demofunc-queue-2
+          binder: local_rabbit
+        consumer2-in-0:
+          destination: demofunc-exchange-2
+          group: demofunc-queue-2
+          binder: local_rabbit
       binders:
         local_rabbit:
           type: rabbit

@@ -87,8 +87,13 @@ public class DemoProxyConfig {
                 LOGGER.debug("intercept supplier - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
                 LOGGER.debug("intercept supplier - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
 
-                // IMPORTANT: get() only entered once for Flux stream!!!
-                return DemoSupplierAdviceInvocator.invokeReactive((Flux<?>)methodInvocation.proceed(), demoService);
+                Object result = methodInvocation.proceed();
+                if (result instanceof Flux<?>) {
+                    // IMPORTANT: get() only entered once for Flux stream!!!
+                    return DemoSupplierAdviceInvocator.invokeReactive((Flux<?>) result, demoService);
+                } else {
+                    return DemoSupplierAdviceInvocator.invoke(result);
+                }
             }
         };
     }
