@@ -50,7 +50,7 @@ clear
 #echo "waiting app to start ..."
 #waitForAppToStart
 
-for i in {1..1}
+for i in {1..100}
 do
   invokeEndpoint
   sleep 0.010

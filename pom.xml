@@ -4,11 +4,11 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.jeffrey.example</groupId>
-	<artifactId>demoEntity-spring-webflux</artifactId>
+	<artifactId>demo-spring-webflux</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>demoEntity-spring-webflux</name>
+	<name>demo-spring-webflux</name>
 	<description>Demo project for Spring Boot Webflux</description>
 
 	<parent>
@@ -98,6 +98,20 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>28.0-jre</version>
+		</dependency>
+
+		<!-- graceful shutdown -->
+		<!-- use circuit breaker for governing the system timeout globally -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+		</dependency>
+
+		<!-- graceful shutdown -->
+		<!-- use spring cloud common for factory import selector -->
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-commons</artifactId>
 		</dependency>
 
 		<dependency>
