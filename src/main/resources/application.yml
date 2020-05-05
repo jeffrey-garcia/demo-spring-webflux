@@ -129,7 +129,8 @@ spring:
           environment:
             spring:
               rabbitmq:
-                addresses: localhost:5672
+                # Connect to RabbitMQ cluster and fail-over at the client-side regardless a HA-proxy
+                addresses: localhost:5674,localhost:5672
                 username: guest
                 password: guest
                 connectionTimeout: 60000

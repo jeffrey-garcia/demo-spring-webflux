@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 import java.util.UUID;
@@ -15,24 +16,31 @@ public class SupplierAdviceInvocator {
 
     public static Flux<?> invokeReactive(Flux<?> outputFlux) {
         return outputFlux.map(value -> {
-            Assert.notNull(value, "value must not be null");
-            LOGGER.debug("intercepting stream of data: {}", value);
+            try {
+                Assert.notNull(value, "value must not be null");
+                LOGGER.debug("intercepting stream of data: {}", value);
 
-            if (value instanceof Message<?>) {
-                // TODO: add error handling
-                Message<?> message = ((Message<?>) value);
-                Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
-                        .copyHeaders(message.getHeaders())
-                        .setHeader("eventId", UUID.randomUUID().toString())
-                        .build();
-                EmitterHandler.transform(message, interceptedMessage);
-                return interceptedMessage;
+                if (value instanceof Message<?>) {
+                    // apply any event-store pre-processing before sending to channel
+//                    Message<?> message = ((Message<?>) value);
+//                    Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
+//                            .copyHeaders(message.getHeaders())
+//                            .setHeader("eventId", UUID.randomUUID().toString())
+//                            .build();
+//                    EmitterHandler.transform(message, interceptedMessage);
+//                    return interceptedMessage;
+                }
+
+                return value;
+
+            } catch (Throwable throwable) {
+                // wraps a checked exception into a special runtime exception that can be handled by onError
+                throw Exceptions.propagate(throwable);
             }
-
-            return value;
         })
-        .onErrorContinue((throwable, o) -> {
-            LOGGER.error("error: {} encountered while processing: {}", throwable, o);
+        .onErrorContinue((throwable, value) -> {
+            LOGGER.error("error encountered while intercepting supplier: {}", throwable.getMessage());
+            LOGGER.error("message is discarded: {}", value);
         });
     }
 

@@ -37,7 +37,7 @@ public class MongoDbConfig extends AbstractMongoClientConfiguration {
     MongoTransactionManager transactionManager(
             @Autowired
             @Qualifier("mongoDbFactory")
-                    MongoDbFactory dbFactory
+            MongoDbFactory dbFactory
     ) {
         // MongoDB Rollback does not work with @Transactional and MongoTransactionManager.
         MongoTransactionManager transactionManager = new MongoTransactionManager(dbFactory);

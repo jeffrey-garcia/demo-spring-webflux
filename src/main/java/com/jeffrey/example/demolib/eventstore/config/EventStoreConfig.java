@@ -1,14 +1,12 @@
 package com.jeffrey.example.demolib.eventstore.config;
 
-import com.jeffrey.example.demolib.eventstore.aop.aspect.ReactiveEventStoreAspect;
+import com.jeffrey.example.demolib.eventstore.aop.aspect.EventStoreAspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.messaging.Message;
 import org.springframework.util.AlternativeJdkIdGenerator;
 import org.springframework.util.IdGenerator;
 
@@ -16,23 +14,10 @@ import java.time.Clock;
 import java.time.ZoneId;
 import java.util.UUID;
 
-import static com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor.GLOBAL_ERROR_CHANNEL;
-import static com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor.GLOBAL_PUBLISHER_CONFIRM_CHANNEL;
-
-/**
- * There are 2 ways to register aspect classes:
- * 1) manually register aspect classes as regular beans, or
- * 2) autodetect them through classpath scanning 
- *
- * If you opt for autodetect through classpath scanning,
- * you are required to add a separate @Component annotation
- * to the aspect class together with @Aspect annotation
- */
-//@ComponentScan("com.example.jeffrey.demolib.eventstore.aop.aspect")
 /**
  * Configuration class which hook up event store components with externalized configuration
  *
- * @see ReactiveEventStoreAspect
+ * @see EventStoreAspect
  * @author Jeffrey Garcia Wong
  */
 @EnableAspectJAutoProxy
@@ -76,11 +61,14 @@ public class EventStoreConfig {
     }
 
     /**
-     * manually register aspect class as regular bean
+     * Create an {@link EventStoreAspect} which is used for intercepting the global error channel
+     * and publisher-confirm channel.
+     *
+     * @return {@link EventStoreAspect}
      */
-    @Bean
-    public ReactiveEventStoreAspect demoAspect() {
-        return new ReactiveEventStoreAspect();
+    @Bean("eventStoreAspect")
+    public EventStoreAspect eventStoreAspect() {
+        return new EventStoreAspect();
     }
 
 }
