@@ -1,6 +1,7 @@
 package com.jeffrey.example.demoapp.function;
 
 import com.jeffrey.example.demoapp.entity.DemoEntity;
+import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +45,14 @@ public class DemoConsumer {
 //        };
 
         return flux -> flux.map(_message -> {
-            DemoEntity demoEntity = _message.getPayload();
-            LOGGER.debug("rx0 - receiving entity: {}", demoEntity.toString());
+            try {
+                // consumer business logic
+                DemoEntity demoEntity = _message.getPayload();
+                LOGGER.debug("rx0 - receiving entity: {}", demoEntity.toString());
+                EmitterHandler.notifySuccess(_message);
+            } catch (Exception e) {
+                EmitterHandler.notifyFail(_message, e);
+            }
             return _message;
         }).subscribe(); // remember to subscribe to the incoming flux when using Consumer
     }

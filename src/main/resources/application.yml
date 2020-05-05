@@ -33,27 +33,47 @@ spring:
       poller:
         # increase or decrease the rate of message production (1000 = 1s)
         fixed-delay: 60000
-#      rabbit:
-#        bindings:
-#          consumerRx0-in-0:
-#            consumer:
-#              autoBindDlq: true
       rabbit:
         bindings:
           supplierRx0-out-0:
             producer:
               confirmAckChannel: publisher-confirm
+          consumerRx0-in-0:
+            consumer:
+              # dlx/dlq setup
+              # When DLQ is configured, failed messages are sent to this destination for
+              # subsequent re-processing or auditing and reconciliation.
+              # if no DLQ is provided, by default the messaging system drops the failed message.
+              autoBindDlq: true
+              # The backoff time to wait between re-deliveries
+              # when the backoff time expired, message from the DLQ are routed back to original queue
+              dlqTtl: 15000
+              # The dlqDeadLetterExchange property is specified with no value,
+              # which means route expired messages to the default exchange DLX
+              dlqDeadLetterExchange:
+              # When maxAttempt = 1 (internal retry disabled) AND requeueRejected = true
+              # any rejected/failed message will be re-queued and retry exhaustively
+              # When DLQ is configured, set requeueRejected = false such that any exception thrown
+              # can cause the rejected/failed message to be routed to DLQ instead of infinite retry
+              requeueRejected: false
       bindings:
         supplierRx0-out-0:
           destination: demofunc-exchange-rx0
           group: demofunc-queue-rx0
+          contentType: application/json
           binder: local_rabbit
           producer:
             errorChannelEnabled: true
         consumerRx0-in-0:
           destination: demofunc-exchange-rx0
+          contentType: application/json
           group: demofunc-queue-rx0
           binder: local_rabbit
+          consumer:
+            # Disable default binder retry
+            # if not configured, default binder will assume 3 attempts before it considered the retries are exhausted
+            # if set to 1, binder internal retry will be disabled and message are routed to DLQ right-away when any exception
+            maxAttempts: 1
 #        supplierRx1-out-0:
 #          destination: demofunc-exchange-rx1
 #          group: demofunc-queue-rx1

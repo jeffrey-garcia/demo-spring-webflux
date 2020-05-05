@@ -28,6 +28,7 @@ public class SupplierAdviceInvocator {
                 EmitterHandler.transform(message, interceptedMessage);
                 return interceptedMessage;
             }
+
             return value;
         })
         .onErrorContinue((throwable, o) -> {

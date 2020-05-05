@@ -86,7 +86,7 @@ public class DemoRxController {
 //        return Mono.just(ResponseEntity.status(HttpStatus.ACCEPTED).body(_demoEntity));
 
         /**
-         * handle if emitter and downstream encounter error
+         * handle if error encountered during supplier flow
          **/
         // create the callback
         Mono<?> callback = EmitterHandler.create(_demoEntity);
@@ -98,11 +98,11 @@ public class DemoRxController {
             // start publishing data after subscribed
             demoEntityEmitterProcessor.onNext(_demoEntity);
         }).doFinally(output -> {
-            // dispose the subcription when finish
+            // dispose the subscription when finish
             subscription.dispose();
         })
         .timeout(
-            // define timeout to avoid blocking the server if response can't be produced timely
+            // define timeout to release the mono if the response can't be produced timely
             Duration.ofMillis(5000)
         )
         .map(output -> {

@@ -51,12 +51,13 @@ public class ReactiveEventStoreConfig {
 
                 if (args[0] instanceof Flux<?>) {
                     // IMPORTANT: accept() only entered once for Flux stream!!!
-                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive((Flux<?>)args[0]);
+//                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive((Flux<?>)args[0]);
+//                    reflectiveMethodInvocation.setArguments(interceptedFlux);
+//                    return methodInvocation.proceed();
+
+                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive2((Flux<?>)args[0], eventStoreService);
                     reflectiveMethodInvocation.setArguments(interceptedFlux);
                     return methodInvocation.proceed();
-
-//                    Object result = ConsumerAdviceInvocator.invokeReactive2((Flux<?>)args[0], methodInvocation, eventStoreService);
-//                    return result;
 
                 } else {
                     Object interceptedObject = ConsumerAdviceInvocator.invoke(args[0]);
