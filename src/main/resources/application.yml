@@ -1,14 +1,13 @@
-
 spring:
   cloud:
     function:
       # control which function method in our code will be triggered if there are multiple
-#      definition: supplierRx0;consumerRx0;
+      definition: supplierRx0;consumerRx0;
 #      definition: supplierRx1;consumerRx1;
 #      definition: supplierRx2;consumerRx2;
 #      definition: supplier0;consumer0;
 #      definition: supplierRx0;consumerRx0;supplier0;consumer0;
-      definition: supplierRx0;consumerRx0;supplier2;consumer2;
+#      definition: supplierRx0;consumerRx0;supplier2;consumer2;
       # use pipe symbol to dynamically compose multiple handlers to form simple function
 #      definition: supplier1|toUpperCase;toLowerCase|consumer1;
 #      definition: supplierRx2|wrapDoubleQuotes;unwrapDoubleQuotes|consumerRx2;
@@ -39,11 +38,18 @@ spring:
 #          consumerRx0-in-0:
 #            consumer:
 #              autoBindDlq: true
+      rabbit:
+        bindings:
+          supplierRx0-out-0:
+            producer:
+              confirmAckChannel: publisher-confirm
       bindings:
         supplierRx0-out-0:
           destination: demofunc-exchange-rx0
           group: demofunc-queue-rx0
           binder: local_rabbit
+          producer:
+            errorChannelEnabled: true
         consumerRx0-in-0:
           destination: demofunc-exchange-rx0
           group: demofunc-queue-rx0
@@ -88,15 +94,16 @@ spring:
 #          destination: demoComp-exchange-rx0
 #          group: demoComp-queue-rx0
 #          binder: local_rabbit
-        supplier2-out-0:
-          destination: demofunc-exchange-2
-          group: demofunc-queue-2
-          binder: local_rabbit
-        consumer2-in-0:
-          destination: demofunc-exchange-2
-          group: demofunc-queue-2
-          binder: local_rabbit
+#        supplier2-out-0:
+#          destination: demofunc-exchange-2
+#          group: demofunc-queue-2
+#          binder: local_rabbit
+#        consumer2-in-0:
+#          destination: demofunc-exchange-2
+#          group: demofunc-queue-2
+#          binder: local_rabbit
       binders:
+        # Local RabbitMQ binder config
         local_rabbit:
           type: rabbit
           environment:
@@ -106,10 +113,24 @@ spring:
                 username: guest
                 password: guest
                 connectionTimeout: 60000
+                # Requested heartbeat timeout, in seconds; zero for none.
+                requestedHeartbeat: 15000
+                # Configure the connection factory to provide acknowledgement to publishers
+                # - guarantee message is not lost during sending to broker cause
+                # - if the broker is unable to store a message it will return a nack asynchronously
+                #   and refuses responsibility of it, the client could choose to apply retry strategy
+                #   or report the failure to upstream
+                publisherConfirms: true
+                publisherReturns: true
 
 com:
   jeffrey:
     example:
+      eventstore:
+        enabled: true
+        mongo:
+          collectionPrefix: DemoEventStoreV4
+        timezone: Asia/Hong_Kong
       gracefulShutdown:
         enabled: true
         shutdownHook:

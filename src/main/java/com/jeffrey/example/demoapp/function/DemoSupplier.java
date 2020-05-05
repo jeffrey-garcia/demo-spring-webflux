@@ -1,13 +1,9 @@
-package com.jeffrey.example.demoapp.functions;
+package com.jeffrey.example.demoapp.function;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jeffrey.example.demoapp.service.DemoRxService;
-import com.jeffrey.example.demoapp.service.DemoService;
 import com.jeffrey.example.demoapp.entity.DemoEntity;
 import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cloud.function.context.PollableBean;
@@ -27,18 +23,6 @@ public class DemoSupplier {
     private static final Logger LOGGER = LoggerFactory.getLogger(DemoSupplier.class);
 
     @Autowired
-    private ObjectMapper jsonMapper;
-
-    @Autowired
-    private DemoService demoService;
-
-    @Autowired
-    private DemoRxService demoRxService;
-
-    @Autowired
-    private BeanFactory beanFactory;
-
-    @Autowired
     @Qualifier("demoEntityEmitProcessor")
     EmitterProcessor<DemoEntity> demoEntityEmitterProcessor;
 
@@ -48,33 +32,6 @@ public class DemoSupplier {
      */
     @Bean
     public Supplier<Flux<Message<DemoEntity>>> supplierRx0() {
-//        return new Supplier<Flux<Message<DemoEntity>>>() {
-//            @Override
-//            public Flux<Message<DemoEntity>> get() {
-//                return demoEntityEmitterProcessorWithCallback
-//                .doOnNext(callback -> {
-//                    LOGGER.debug("rx0 - emitting entity: {}", callback.getInput().toString());
-//                    DemoEntity demoEntity = callback.getInput();
-//                    LOGGER.debug("rx0 - emitting entity: {}", demoEntity);
-//                    if (demoEntity.getData() == null)
-//                        throw new RuntimeException("error");
-//                    else
-//                        callback.output(demoEntity);
-//                })
-//                .onErrorContinue((throwable, callback) -> {
-//                    ((EmitterCallback<DemoEntity>) callback).error(throwable);
-//                })
-//                .map(callback -> {
-//                    DemoEntity demoEntity = callback.getInput();
-//                    Message<DemoEntity> message = MessageBuilder.withPayload(demoEntity).build();
-//                    LOGGER.debug("sending message - headers: {}", message.getHeaders().toString());
-//                    LOGGER.debug("sending message - payload: {}", message.getPayload().toString());
-//                    callback.transformed(message);
-//                    return message;
-//                });
-//            }
-//        };
-
         return () -> {
             return demoEntityEmitterProcessor.doOnNext(_demoEntity -> {
                 LOGGER.debug("rx0 - emitting entity: {}", _demoEntity.toString());

@@ -3,10 +3,9 @@ package com.jeffrey.example.demolib.eventstore.util;
 import com.jeffrey.example.demoapp.dao.DemoDao;
 import com.jeffrey.example.demoapp.dao.DemoRxDao;
 import com.jeffrey.example.demolib.eventstore.annotation.EnableEventStore;
-import com.jeffrey.example.demolib.eventstore.config.EventStoreConfig;
-import com.jeffrey.example.demolib.eventstore.config.MongoDbConfig;
-import com.jeffrey.example.demolib.eventstore.config.ReactiveMongoDbConfig;
-import com.jeffrey.example.demolib.eventstore.config.ReactiveStoreConfig;
+import com.jeffrey.example.demolib.eventstore.config.*;
+import com.jeffrey.example.demolib.eventstore.dao.MongoEventStoreDao;
+import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.springframework.cloud.commons.util.SpringFactoryImportSelector;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.type.AnnotationMetadata;
@@ -26,14 +25,20 @@ public class EnableEventStoreImportSelector extends SpringFactoryImportSelector<
         } else {
             String [] imports = super.selectImports(metadata);
             AnnotationAttributes attributes = AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(this.getAnnotationClass().getName(), true));
-            List<String> importsList = new ArrayList(Arrays.asList(imports));
+            List<String> importsList = new ArrayList<>(Arrays.asList(imports));
+
+            importsList.add(ServiceActivatorConfig.class.getName());
+            importsList.add(ChannelBindingAccessor.class.getName());
 
             importsList.add(MongoDbConfig.class.getName());
             importsList.add(ReactiveMongoDbConfig.class.getName());
+            importsList.add(MongoEventStoreDao.class.getName());
             importsList.add(DemoDao.class.getName());
             importsList.add(DemoRxDao.class.getName());
+
             importsList.add(EventStoreConfig.class.getName());
-            importsList.add(ReactiveStoreConfig.class.getName());
+            importsList.add(ReactiveEventStoreConfig.class.getName());
+            importsList.add(EventStoreService.class.getName());
 
             imports = importsList.toArray(new String[0]);
             return imports;

@@ -27,12 +27,12 @@ public class DemoController {
     @Autowired
     DemoService demoService;
 
-    /**
-     * StreamBridge bean which allows us to send data to an output binding
-     # effectively bridging non-stream application with spring-cloud-stream
-     */
-    @Autowired
-    StreamBridge streamBridge;
+//    /**
+//     * StreamBridge bean which allows us to send data to an output binding
+//     # effectively bridging non-stream application with spring-cloud-stream
+//     */
+//    @Autowired
+//    StreamBridge streamBridge;
 
     /**
      * curl  -i -X GET "http://localhost:8081/demoEntity/id"
@@ -85,7 +85,7 @@ public class DemoController {
         demoEntity = demoEntity==null? new DemoEntity(null):demoEntity;
 
         // the binding name is auto-created by the configuration spring.cloud.stream.source
-        streamBridge.send("supplier2-out-0", demoEntity);
+//        streamBridge.send("supplier2-out-0", demoEntity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -129,7 +129,7 @@ public class DemoController {
             DemoEntity demoEntity = new DemoEntity(_formData.getFirst("data"));
 
             // the binding name is auto-created by the configuration spring.cloud.stream.source
-            streamBridge.send("supplier2-out-0", demoEntity);
+//            streamBridge.send("supplier2-out-0", demoEntity);
 
             return demoEntity;
 

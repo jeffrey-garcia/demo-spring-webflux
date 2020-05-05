@@ -1,10 +1,7 @@
 package com.jeffrey.example.demolib.eventstore.aop.aspect;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jeffrey.example.demoapp.service.DemoRxService;
-import com.jeffrey.example.demoapp.service.DemoService;
-import com.jeffrey.example.demoapp.entity.DemoEntity;
 import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
+import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -12,7 +9,6 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
 import org.springframework.util.Assert;
@@ -26,17 +22,7 @@ public class ReactiveEventStoreAspect {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveEventStoreAspect.class);
 
     @Autowired
-    ApplicationContext applicationContext;
-
-    @Autowired
-    ObjectMapper jsonMapper;
-
-    @Autowired
-    DemoService demoService;
-
-    @Autowired
-    DemoRxService demoRxService;
-
+    private EventStoreService eventStoreService;
 
 //    @Deprecated
 //    @SuppressWarnings("unused")
@@ -77,14 +63,15 @@ public class ReactiveEventStoreAspect {
             ProceedingJoinPoint proceedingJoinPoint
     ) throws Throwable
     {
-//        LOGGER.debug("intercept supplier - join point signature: {}", proceedingJoinPoint.getSignature());
-//        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", proceedingJoinPoint.getSignature().getDeclaringType().getName());
-//        LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
-//        LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
+        LOGGER.debug("intercept supplier - join point signature: {}", proceedingJoinPoint.getSignature());
+        LOGGER.debug("intercept supplier - intercepted method overridden by: {}", proceedingJoinPoint.getSignature().getDeclaringType().getName());
+        LOGGER.debug("intercept supplier - proxy class: {}", proceedingJoinPoint.getThis().getClass().getName());
+        LOGGER.debug("intercept supplier - implementing class: {}", proceedingJoinPoint.getTarget().getClass().getName());
 
         // safe casting - pointcut guaranteed the target class is instance of AbstractMessageChannel
-        String channelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
-        LOGGER.debug("intercept supplier - channel name: {}", channelName);
+        String outputChannelName = ((AbstractMessageChannel) proceedingJoinPoint.getTarget()).getBeanName();
+        LOGGER.debug("intercept supplier - output channel name: {}", outputChannelName);
+
         // TODO: verify of the channel is an output channel
 
         Object[] args = proceedingJoinPoint.getArgs();
@@ -95,26 +82,39 @@ public class ReactiveEventStoreAspect {
         Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
         Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
 
-        // payload conversion to entity before saving to DB
+//        // payload conversion to entity before saving to DB
+//        Message<?> message = (Message<?>) args[0];
+//        byte [] bytes = (byte[])message.getPayload();
+//        String jsonString = new String(bytes);
+//        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
+//
+//        LOGGER.debug("saving entity to DB: {}", jsonString);
+//
+//        // guarantees atomic behavior for write DB and send message to broker
+//        // cannot propagate database write error back to controllers
+//        // guarantee
+////        demoService.createDemoEntity(demoEntity);
+////        return proceedingJoinPoint.proceed();
+//
+//        try {
+//            demoService.createDemoEntity(demoEntity);
+//            Object result = proceedingJoinPoint.proceed();
+//            EmitterHandler.notifySuccess(message);
+//            return result;
+//        } catch (Throwable throwable) {
+//            EmitterHandler.notifyFail(message, throwable);
+//            throw throwable;
+//        }
+
         Message<?> message = (Message<?>) args[0];
-        byte [] bytes = (byte[])message.getPayload();
-        String jsonString = new String(bytes);
-        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
-
-        LOGGER.debug("saving entity to DB: {}", jsonString);
-
-        // guarantees atomic behavior for write DB and send message to broker
-        // cannot propagate database write error back to controllers
-        // guarantee
-//        demoService.createDemoEntity(demoEntity);
-//        return proceedingJoinPoint.proceed();
-
         try {
-            demoService.createDemoEntity(demoEntity);
-            Object result = proceedingJoinPoint.proceed();
+            Object result = eventStoreService.createEventFromMessageAndSend(
+                    message,
+                    outputChannelName,
+                    proceedingJoinPoint);
             EmitterHandler.notifySuccess(message);
             return result;
-        } catch (Throwable throwable) {
+        } catch(Throwable throwable) {
             EmitterHandler.notifyFail(message, throwable);
             throw throwable;
         }

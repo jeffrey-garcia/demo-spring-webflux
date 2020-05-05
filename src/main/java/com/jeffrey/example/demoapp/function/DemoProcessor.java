@@ -1,4 +1,4 @@
-package com.jeffrey.example.demoapp.functions;
+package com.jeffrey.example.demoapp.function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

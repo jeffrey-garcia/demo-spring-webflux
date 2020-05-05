@@ -2,6 +2,7 @@ package com.jeffrey.example.demolib.eventstore.config;
 
 import com.jeffrey.example.demolib.eventstore.aop.advice.ConsumerAdviceInvocator;
 import com.jeffrey.example.demolib.eventstore.aop.advice.SupplierAdviceInvocator;
+import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
@@ -20,11 +21,14 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Configuration
-public class ReactiveStoreConfig {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveStoreConfig.class);
+public class ReactiveEventStoreConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveEventStoreConfig.class);
 
     @Autowired
     ApplicationContext applicationContext;
+
+    @Autowired
+    EventStoreService eventStoreService;
 
     @Bean("consumerInterceptor")
     public Advice consumerInterceptor() {
@@ -49,12 +53,18 @@ public class ReactiveStoreConfig {
                     // IMPORTANT: accept() only entered once for Flux stream!!!
                     Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive((Flux<?>)args[0]);
                     reflectiveMethodInvocation.setArguments(interceptedFlux);
+                    return methodInvocation.proceed();
+
+//                    Object result = ConsumerAdviceInvocator.invokeReactive2((Flux<?>)args[0], methodInvocation, eventStoreService);
+//                    return result;
+
                 } else {
                     Object interceptedObject = ConsumerAdviceInvocator.invoke(args[0]);
                     reflectiveMethodInvocation.setArguments(interceptedObject);
+                    return methodInvocation.proceed();
                 }
 
-                return methodInvocation.proceed();
+//                return methodInvocation.proceed();
             }
         };
     }
@@ -85,32 +95,32 @@ public class ReactiveStoreConfig {
         };
     }
 
-    @Bean("supplierChannelInterceptor")
-    public Advice supplierChannelInterceptor() {
-        return new MethodInterceptor() {
-            @Override
-            public Object invoke(MethodInvocation methodInvocation) throws Throwable {
-                if (!methodInvocation.getMethod().getName().equals("send")) {
-                    return methodInvocation.proceed();
-                }
-
-                ReflectiveMethodInvocation reflectiveMethodInvocation = ((ReflectiveMethodInvocation) methodInvocation);
-                LOGGER.debug("intercept supplier - join point signature: {}", reflectiveMethodInvocation.toString());
-                LOGGER.debug("intercept supplier - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
-                LOGGER.debug("intercept supplier - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
-                LOGGER.debug("intercept supplier - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
-
-                Object[] args = methodInvocation.getArguments();
-                Assert.notNull(args, "arguments should not be null");
-                Assert.isTrue(args.length>=1, "MessageChannel send method should have at least 1 parameter");
-                if (args.length == 1) {
-                    // TODO:
-                }
-
-                return methodInvocation.proceed();
-            }
-        };
-    }
+//    @Bean("supplierChannelInterceptor")
+//    public Advice supplierChannelInterceptor() {
+//        return new MethodInterceptor() {
+//            @Override
+//            public Object invoke(MethodInvocation methodInvocation) throws Throwable {
+//                if (!methodInvocation.getMethod().getName().equals("send")) {
+//                    return methodInvocation.proceed();
+//                }
+//
+//                ReflectiveMethodInvocation reflectiveMethodInvocation = ((ReflectiveMethodInvocation) methodInvocation);
+//                LOGGER.debug("intercept supplier - join point signature: {}", reflectiveMethodInvocation.toString());
+//                LOGGER.debug("intercept supplier - intercepted method declared in class: {}", reflectiveMethodInvocation.getMethod().getDeclaringClass().getTypeName());
+//                LOGGER.debug("intercept supplier - proxy class: {}", reflectiveMethodInvocation.getProxy().getClass().getName());
+//                LOGGER.debug("intercept supplier - implementing class: {}", reflectiveMethodInvocation.getThis().getClass().getName());
+//
+//                Object[] args = methodInvocation.getArguments();
+//                Assert.notNull(args, "arguments should not be null");
+//                Assert.isTrue(args.length>=1, "MessageChannel send method should have at least 1 parameter");
+//                if (args.length == 1) {
+//                    // TODO:
+//                }
+//
+//                return methodInvocation.proceed();
+//            }
+//        };
+//    }
 
     @Bean("consumerProxyCreator")
     public BeanNameAutoProxyCreator consumerProxyCreator() {
