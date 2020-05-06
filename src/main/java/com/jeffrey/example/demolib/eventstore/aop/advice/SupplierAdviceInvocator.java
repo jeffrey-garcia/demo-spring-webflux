@@ -23,16 +23,20 @@ public class SupplierAdviceInvocator {
         return outputFlux.map(value -> {
             try {
                 Assert.notNull(value, "value must not be null");
-                LOGGER.debug("intercepting stream of data: {}", value);
 
                 if (value instanceof Message<?>) {
+                    LOGGER.debug("intercepting supplier stream: {}", value);
                     // apply event-store pre-processing before sending to channel
+
+                    // temporary workaround:
+                    // generate an eventId as key to reference the emitter callback at supplier side
                     Message<?> message = ((Message<?>) value);
                     Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
                             .copyHeaders(message.getHeaders())
                             .setHeader("eventId", eventStoreService.generateEventId())
                             .build();
                     EmitterHandler.transform(message, interceptedMessage);
+
                     return interceptedMessage;
                 }
 

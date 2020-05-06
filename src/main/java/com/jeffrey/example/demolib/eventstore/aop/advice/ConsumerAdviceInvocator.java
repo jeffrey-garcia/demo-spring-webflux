@@ -27,9 +27,9 @@ public class ConsumerAdviceInvocator {
         return inputFlux.map(value -> {
             try {
                 Assert.notNull(value, "value must not be null");
-                LOGGER.debug("intercepting stream of data: {}", value);
 
                 if (value instanceof Message<?>) {
+                    LOGGER.debug("intercepting consumer stream: {}", value);
                     Message<?> message = (Message<?>) value;
                     String eventId = message.getHeaders().get("eventId", String.class);
                     String outputChannelName = message.getHeaders().get("outputChannelName", String.class);

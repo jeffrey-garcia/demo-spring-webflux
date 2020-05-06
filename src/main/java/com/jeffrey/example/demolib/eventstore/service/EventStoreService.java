@@ -105,8 +105,7 @@ public class EventStoreService<T> {
      * @throws IOException if any error encountered during the message conversion
      */
     private Message createEventFromMessage(Message message, String outputChannelName) throws IOException {
-        Object eventIdObj = message.getHeaders().get("eventId");
-        String eventId = (!(eventIdObj instanceof String)) ? generateEventId() : (String) eventIdObj;
+        String eventId = generateEventId();
 
         message = MessageBuilder
                 .withPayload(message.getPayload())
