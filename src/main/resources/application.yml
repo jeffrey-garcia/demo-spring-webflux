@@ -147,6 +147,8 @@ spring:
 com:
   jeffrey:
     example:
+      messaging:
+        enabled: true
       eventstore:
         enabled: true
         mongo:
