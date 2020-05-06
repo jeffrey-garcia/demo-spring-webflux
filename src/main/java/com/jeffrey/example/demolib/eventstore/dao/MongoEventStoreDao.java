@@ -5,14 +5,12 @@ import com.jeffrey.example.demolib.eventstore.command.EventStoreCallbackCommand;
 import com.jeffrey.example.demolib.eventstore.config.MongoDbConfig;
 import com.jeffrey.example.demolib.eventstore.entity.DomainEvent;
 import com.jeffrey.example.demolib.eventstore.repository.MongoEventStoreRepository;
-import com.jeffrey.example.demolib.eventstore.util.ObjectMapperFactory;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.UpdateResult;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -30,10 +28,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -124,45 +120,6 @@ public class MongoEventStoreDao extends AbstractEventStoreDao {
                 .build();
 
         return mongoTemplate.save(domainEvent, getStoreName(outputChannelName));
-    }
-
-    public void createEventAndSend(
-            Message message,
-            String outputChannelName
-    ) throws IOException {
-        MongoClient client = mongoDbConfig.mongoClient();
-        String dbName = mongoDbConfig.mongoDbFactory().getDb().getName();
-
-        try (ClientSession session = client.startSession()) {
-            String jsonHeader = ObjectMapperFactory.getMapper().toJson(message.getHeaders());
-            String jsonPayload = ObjectMapperFactory.getMapper().toJson(message.getPayload());
-            String payloadClassName = message.getPayload().getClass().getName();
-            String eventId = (String) message.getHeaders().get("eventId");
-
-            MongoCollection<Document> collection = client
-                    .getDatabase(dbName)
-                    .getCollection(getStoreName(outputChannelName));
-
-            Instant instant = ZonedDateTime.now(clock).toInstant();
-
-            Document document = new Document("_id", eventId)
-                    .append("channel", outputChannelName)
-                    .append("header", jsonHeader)
-                    .append("payload", jsonPayload)
-                    .append("payloadType", payloadClassName)
-                    .append("writtenOn", instant)
-                    .append("createdOn", instant)
-                    .append("attemptCount", 1)
-                    .append("_class", DomainEvent.class.getName());
-
-            collection.insertOne(session, document);
-
-            throw new IOException("error writing event store");
-
-        } catch (IOException e) {
-            LOGGER.error("error processing pending event: {}", e.getMessage());
-            throw e;
-        }
     }
 
     @Override

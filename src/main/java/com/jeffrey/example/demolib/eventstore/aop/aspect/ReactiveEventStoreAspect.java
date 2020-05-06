@@ -110,29 +110,21 @@ public class ReactiveEventStoreAspect {
 
         Message<?> message = (Message<?>) args[0];
         try {
+            // guarantees atomic behavior for write DB and send message to broker
             Object result = eventStoreService.createEventFromMessageAndSend(
                     message,
                     outputChannelName,
                     proceedingJoinPoint);
+
+            // notify success to upstream caller
             EmitterHandler.notifySuccess(message);
             return result;
+
         } catch(Throwable throwable) {
+            // propagate any error back upstream caller
             EmitterHandler.notifyFail(message, throwable);
             throw throwable;
         }
-
-//        Message<?> message = (Message<?>) args[0];
-//        try {
-//            message = eventStoreService.createEventFromMessage(
-//                    message,
-//                    outputChannelName);
-//            EmitterHandler.notifySuccess(message);
-//
-//        } catch(Throwable throwable) {
-//            EmitterHandler.notifyFail(message, throwable);
-//            throw throwable;
-//        }
-//        return proceedingJoinPoint.proceed(new Object[] {message});
 
     }
 }

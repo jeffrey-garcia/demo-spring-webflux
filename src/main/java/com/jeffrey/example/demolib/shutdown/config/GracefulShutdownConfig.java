@@ -1,6 +1,5 @@
 package com.jeffrey.example.demolib.shutdown.config;
 
-
 import com.jeffrey.example.demolib.shutdown.service.GracefulShutdownService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +20,11 @@ public class GracefulShutdownConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(GracefulShutdownConfig.class);
 
     // default to 5000ms if not defined
+    @SuppressWarnings("unused")
     @Value("${com.jeffrey.example.gracefulShutdown.shutdownHook.timeoutMillis:5000}")
     private int shutdownHookTimeout;
 
+    @SuppressWarnings({"unused"})
     @RefreshScope
     @Bean("sigIntHandler")
     public SignalHandler sigIntHandler(
@@ -42,6 +43,7 @@ public class GracefulShutdownConfig {
         });
     }
 
+    @SuppressWarnings({"unused"})
     @RefreshScope
     @Bean("sigTermHandler")
     public SignalHandler sigTermHandler(
@@ -60,11 +62,10 @@ public class GracefulShutdownConfig {
         });
     }
 
+    @SuppressWarnings("unused")
     @Bean("gracefulShutdownContainerCloseListener")
     ApplicationListener<ContextClosedEvent> gracefulShutdownContainerCloseListener() {
-        return (ApplicationListener<ContextClosedEvent>) contextClosedEvent -> {
-            LOGGER.debug("Spring container is closed");
-        };
+        return contextClosedEvent -> LOGGER.debug("Spring container is closed");
     }
 
 }

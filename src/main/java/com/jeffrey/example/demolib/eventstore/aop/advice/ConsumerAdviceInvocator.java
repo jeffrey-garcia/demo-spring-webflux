@@ -17,13 +17,13 @@ import java.time.Duration;
 public class ConsumerAdviceInvocator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsumerAdviceInvocator.class);
 
-    public static Flux<?> invokeReactive(Flux<?> inputFlux) {
-        return inputFlux.doOnNext(value -> {
-            LOGGER.debug("intercepting stream of data: {}", value);
-        });
-    }
+//    public static Flux<?> invokeReactive(Flux<?> inputFlux) {
+//        return inputFlux.doOnNext(value -> {
+//            LOGGER.debug("intercepting incoming data stream: {}", value);
+//        });
+//    }
 
-    public static Flux<?> invokeReactive2(Flux<?> inputFlux, EventStoreService eventStoreService) {
+    public static Flux<?> invokeReactive(Flux<?> inputFlux, EventStoreService eventStoreService) {
         return inputFlux.map(value -> {
             try {
                 Assert.notNull(value, "value must not be null");

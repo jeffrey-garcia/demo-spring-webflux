@@ -16,6 +16,7 @@ import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.MessagingException;
 import org.springframework.messaging.support.ErrorMessage;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
  * service activator to integrate event store without affecting the business logic
  * @author Jeffrey Garcia Wong
  */
+@Component("EventStoreAspect")
 @Aspect
 public class EventStoreAspect {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventStoreAspect.class);

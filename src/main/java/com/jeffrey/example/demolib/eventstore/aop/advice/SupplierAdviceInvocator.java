@@ -1,6 +1,7 @@
 package com.jeffrey.example.demolib.eventstore.aop.advice;
 
 import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
+import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.Message;
@@ -9,12 +10,16 @@ import org.springframework.util.Assert;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
-import java.util.UUID;
-
 public class SupplierAdviceInvocator {
     private static final Logger LOGGER = LoggerFactory.getLogger(SupplierAdviceInvocator.class);
 
-    public static Flux<?> invokeReactive(Flux<?> outputFlux) {
+//    public static Flux<?> invokeReactive(Flux<?> inputFlux) {
+//        return inputFlux.doOnNext(value -> {
+//            LOGGER.debug("intercepting outgoing data stream: {}", value);
+//        });
+//    }
+
+    public static Flux<?> invokeReactive(Flux<?> outputFlux, EventStoreService eventStoreService) {
         return outputFlux.map(value -> {
             try {
                 Assert.notNull(value, "value must not be null");
@@ -25,7 +30,7 @@ public class SupplierAdviceInvocator {
                     Message<?> message = ((Message<?>) value);
                     Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
                             .copyHeaders(message.getHeaders())
-                            .setHeader("eventId", UUID.randomUUID().toString())
+                            .setHeader("eventId", eventStoreService.generateEventId())
                             .build();
                     EmitterHandler.transform(message, interceptedMessage);
                     return interceptedMessage;

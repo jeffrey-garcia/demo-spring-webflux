@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -22,7 +23,13 @@ import reactor.core.publisher.Flux;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-//@EnableAspectJAutoProxy
+/**
+ * Configuration class which hook up reactive event store components with externalized configuration.
+ * Auto-detect and registers {@link ReactiveEventStoreAspect} using classpath scanning
+ *
+ * @see ReactiveEventStoreAspect
+ * @author Jeffrey Garcia Wong
+ */
 @ComponentScan(basePackageClasses = {ReactiveEventStoreAspect.class})
 @Configuration
 public class ReactiveEventStoreConfig {
@@ -32,7 +39,9 @@ public class ReactiveEventStoreConfig {
     ApplicationContext applicationContext;
 
     @Bean("consumerInterceptor")
-    public Advice consumerInterceptor(EventStoreService eventStoreService) {
+    public Advice consumerInterceptor(
+        @Autowired @Qualifier("EventStoreService") EventStoreService eventStoreService
+    ) {
         return new MethodInterceptor() {
             @Override
             public Object invoke(MethodInvocation methodInvocation) throws Throwable {
@@ -52,11 +61,7 @@ public class ReactiveEventStoreConfig {
 
                 if (args[0] instanceof Flux<?>) {
                     // IMPORTANT: accept() only entered once for Flux stream!!!
-//                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive((Flux<?>)args[0]);
-//                    reflectiveMethodInvocation.setArguments(interceptedFlux);
-//                    return methodInvocation.proceed();
-
-                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive2((Flux<?>)args[0], eventStoreService);
+                    Flux<?> interceptedFlux = ConsumerAdviceInvocator.invokeReactive((Flux<?>)args[0], eventStoreService);
                     reflectiveMethodInvocation.setArguments(interceptedFlux);
                     return methodInvocation.proceed();
 
@@ -65,14 +70,14 @@ public class ReactiveEventStoreConfig {
                     reflectiveMethodInvocation.setArguments(interceptedObject);
                     return methodInvocation.proceed();
                 }
-
-//                return methodInvocation.proceed();
             }
         };
     }
 
     @Bean("supplierInterceptor")
-    public Advice supplierInterceptor() {
+    public Advice supplierInterceptor(
+        @Autowired @Qualifier("EventStoreService") EventStoreService eventStoreService
+    ) {
         return new MethodInterceptor() {
             @Override
             public Object invoke(MethodInvocation methodInvocation) throws Throwable {
@@ -89,7 +94,7 @@ public class ReactiveEventStoreConfig {
                 Object result = methodInvocation.proceed();
                 if (result instanceof Flux<?>) {
                     // IMPORTANT: get() only entered once for Flux stream!!!
-                    return SupplierAdviceInvocator.invokeReactive((Flux<?>) result);
+                    return SupplierAdviceInvocator.invokeReactive((Flux<?>) result, eventStoreService);
                 } else {
                     return SupplierAdviceInvocator.invoke(result);
                 }

@@ -68,6 +68,10 @@ public class EventStoreService<T> {
 //        this.eventStoreRetryService = eventStoreRetryService;
     }
 
+    public String generateEventId() {
+        return eventIdGenerator.generateId().toString();
+    }
+
     /**
      * Write the message into event store and send it to the specified output channel.
      * The method is annotated with {@link Transactional} to ensure the atomic behavior
@@ -100,8 +104,9 @@ public class EventStoreService<T> {
      * @return the re-generated {@link Message}
      * @throws IOException if any error encountered during the message conversion
      */
-    public Message createEventFromMessage(Message message, String outputChannelName) throws IOException {
-        String eventId = eventIdGenerator.generateId().toString();
+    private Message createEventFromMessage(Message message, String outputChannelName) throws IOException {
+        Object eventIdObj = message.getHeaders().get("eventId");
+        String eventId = (!(eventIdObj instanceof String)) ? generateEventId() : (String) eventIdObj;
 
         message = MessageBuilder
                 .withPayload(message.getPayload())
@@ -115,8 +120,6 @@ public class EventStoreService<T> {
         String payloadClassName = message.getPayload().getClass().getName();
 
         eventStoreDao.createEvent(eventId, jsonHeader, jsonPayload, payloadClassName, outputChannelName);
-//        ((MongoEventStoreDao)eventStoreDao).createEventAndSend(message, outputChannelName);
-
         return message;
     }
 

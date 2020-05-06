@@ -30,7 +30,7 @@ public class DemoConsumerTests {
         demoConsumer = new DemoConsumer();
     }
 
-    @SuppressWarnings({"unchecked"})
+//    @SuppressWarnings({"unchecked"})
     @Test
     public void verifyConsumerRx0() {
         int TEST_COUNT = 5;
@@ -64,7 +64,9 @@ public class DemoConsumerTests {
                 LOGGER.debug("result: {}", value);
                 output.add(value);
             }).subscribe().dispose();
-        }).accept((Flux<Message<DemoEntity>>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
+        })
+        .accept((Flux<Message<DemoEntity>>) inputFlux);
+//        .accept((Flux<Message<DemoEntity>>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
 
         // validate the output
         Assert.assertEquals(TEST_COUNT, output.size());
@@ -93,7 +95,9 @@ public class DemoConsumerTests {
                 LOGGER.debug("result: {}", value);
                 output.add(value);
             }).subscribe().dispose();
-        }).accept((Flux<String>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
+        })
+        .accept((Flux<String>) inputFlux);
+//        .accept((Flux<String>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
 
         // validate the output
         Assert.assertEquals(input.length, output.size());
@@ -116,7 +120,9 @@ public class DemoConsumerTests {
         List<String> output = new ArrayList<>();
 
         // emit the stream to consumer
-        Flux<String> outputFlux = consumerRx2.apply((Flux<String>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
+        Flux<String> outputFlux = consumerRx2
+                                    .apply((Flux<String>) inputFlux);
+//                                    .apply((Flux<String>) ConsumerAdviceInvocator.invokeReactive(inputFlux));
 
         // output the consumed data for validation
         outputFlux.doOnNext(value -> {
