@@ -2,7 +2,6 @@ package com.jeffrey.example.demolib.eventstore.config;
 
 import com.jeffrey.example.demolib.eventstore.aop.advice.ConsumerAdviceInvocator;
 import com.jeffrey.example.demolib.eventstore.aop.advice.SupplierAdviceInvocator;
-import com.jeffrey.example.demolib.eventstore.aop.aspect.EventStoreAspect;
 import com.jeffrey.example.demolib.eventstore.aop.aspect.ReactiveEventStoreAspect;
 import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.aopalliance.aop.Advice;
@@ -15,15 +14,16 @@ import org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-@EnableAspectJAutoProxy
+//@EnableAspectJAutoProxy
+@ComponentScan(basePackageClasses = {ReactiveEventStoreAspect.class})
 @Configuration
 public class ReactiveEventStoreConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveEventStoreConfig.class);
@@ -31,11 +31,8 @@ public class ReactiveEventStoreConfig {
     @Autowired
     ApplicationContext applicationContext;
 
-    @Autowired
-    EventStoreService eventStoreService;
-
     @Bean("consumerInterceptor")
-    public Advice consumerInterceptor() {
+    public Advice consumerInterceptor(EventStoreService eventStoreService) {
         return new MethodInterceptor() {
             @Override
             public Object invoke(MethodInvocation methodInvocation) throws Throwable {
@@ -173,11 +170,4 @@ public class ReactiveEventStoreConfig {
         return beanNameAutoProxyCreator;
     }
 
-    /**
-     * manually register aspect class as regular bean
-     */
-    @Bean("ReactiveEventStoreAspect")
-    public ReactiveEventStoreAspect reactiveEventStoreAspect() {
-        return new ReactiveEventStoreAspect();
-    }
 }

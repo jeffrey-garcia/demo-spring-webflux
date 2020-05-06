@@ -11,12 +11,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
+import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 /**
  * [IMPORTANT] this aspect should only be used for non-blocking channel
  * add handling to separate this aspect to intercept any blocking channel
  */
+@Component("ReactiveEventStoreAspect")
 @Aspect
 public class ReactiveEventStoreAspect {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveEventStoreAspect.class);
@@ -118,5 +120,19 @@ public class ReactiveEventStoreAspect {
             EmitterHandler.notifyFail(message, throwable);
             throw throwable;
         }
+
+//        Message<?> message = (Message<?>) args[0];
+//        try {
+//            message = eventStoreService.createEventFromMessage(
+//                    message,
+//                    outputChannelName);
+//            EmitterHandler.notifySuccess(message);
+//
+//        } catch(Throwable throwable) {
+//            EmitterHandler.notifyFail(message, throwable);
+//            throw throwable;
+//        }
+//        return proceedingJoinPoint.proceed(new Object[] {message});
+
     }
 }

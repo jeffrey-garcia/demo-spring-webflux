@@ -21,14 +21,14 @@ public class SupplierAdviceInvocator {
                 LOGGER.debug("intercepting stream of data: {}", value);
 
                 if (value instanceof Message<?>) {
-                    // apply any event-store pre-processing before sending to channel
-//                    Message<?> message = ((Message<?>) value);
-//                    Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
-//                            .copyHeaders(message.getHeaders())
-//                            .setHeader("eventId", UUID.randomUUID().toString())
-//                            .build();
-//                    EmitterHandler.transform(message, interceptedMessage);
-//                    return interceptedMessage;
+                    // apply event-store pre-processing before sending to channel
+                    Message<?> message = ((Message<?>) value);
+                    Message<?> interceptedMessage = MessageBuilder.withPayload(message.getPayload())
+                            .copyHeaders(message.getHeaders())
+                            .setHeader("eventId", UUID.randomUUID().toString())
+                            .build();
+                    EmitterHandler.transform(message, interceptedMessage);
+                    return interceptedMessage;
                 }
 
                 return value;

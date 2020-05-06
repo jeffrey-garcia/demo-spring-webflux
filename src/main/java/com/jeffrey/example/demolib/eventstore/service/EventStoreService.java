@@ -3,6 +3,7 @@ package com.jeffrey.example.demolib.eventstore.service;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.jeffrey.example.demolib.eventstore.dao.EventStoreDao;
+import com.jeffrey.example.demolib.eventstore.dao.MongoEventStoreDao;
 import com.jeffrey.example.demolib.eventstore.entity.DomainEvent;
 import com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor;
 import com.jeffrey.example.demolib.eventstore.util.ObjectMapperFactory;
@@ -99,7 +100,7 @@ public class EventStoreService<T> {
      * @return the re-generated {@link Message}
      * @throws IOException if any error encountered during the message conversion
      */
-    Message createEventFromMessage(Message message, String outputChannelName) throws IOException {
+    public Message createEventFromMessage(Message message, String outputChannelName) throws IOException {
         String eventId = eventIdGenerator.generateId().toString();
 
         message = MessageBuilder
@@ -114,6 +115,8 @@ public class EventStoreService<T> {
         String payloadClassName = message.getPayload().getClass().getName();
 
         eventStoreDao.createEvent(eventId, jsonHeader, jsonPayload, payloadClassName, outputChannelName);
+//        ((MongoEventStoreDao)eventStoreDao).createEventAndSend(message, outputChannelName);
+
         return message;
     }
 
