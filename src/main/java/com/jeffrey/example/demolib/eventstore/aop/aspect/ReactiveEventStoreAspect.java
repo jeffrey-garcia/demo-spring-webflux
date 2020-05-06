@@ -84,30 +84,6 @@ public class ReactiveEventStoreAspect {
         Assert.notNull(((Message<?>)args[0]).getPayload(), "message payload cannot be null");
         Assert.isTrue(((Message<?>)args[0]).getPayload() instanceof byte[], "message payload should be byte[] array");
 
-//        // payload conversion to entity before saving to DB
-//        Message<?> message = (Message<?>) args[0];
-//        byte [] bytes = (byte[])message.getPayload();
-//        String jsonString = new String(bytes);
-//        DemoEntity demoEntity = this.jsonMapper.readValue(jsonString, DemoEntity.class);
-//
-//        LOGGER.debug("saving entity to DB: {}", jsonString);
-//
-//        // guarantees atomic behavior for write DB and send message to broker
-//        // cannot propagate database write error back to controllers
-//        // guarantee
-////        demoService.createDemoEntity(demoEntity);
-////        return proceedingJoinPoint.proceed();
-//
-//        try {
-//            demoService.createDemoEntity(demoEntity);
-//            Object result = proceedingJoinPoint.proceed();
-//            EmitterHandler.notifySuccess(message);
-//            return result;
-//        } catch (Throwable throwable) {
-//            EmitterHandler.notifyFail(message, throwable);
-//            throw throwable;
-//        }
-
         Message<?> message = (Message<?>) args[0];
         try {
             // guarantees atomic behavior for write DB and send message to broker
