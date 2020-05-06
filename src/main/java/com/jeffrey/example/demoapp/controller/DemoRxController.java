@@ -2,8 +2,8 @@ package com.jeffrey.example.demoapp.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jeffrey.example.demoapp.entity.DemoEntity;
-import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
 import com.jeffrey.example.demoapp.service.DemoRxService;
+import com.jeffrey.example.demolib.eventstore.publisher.EmitterHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
-import reactor.core.Disposable;
 import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -90,16 +89,13 @@ public class DemoRxController {
          **/
         // create the callback
         Mono<?> callback = EmitterHandler.create(_demoEntity);
-
-        // subscribe the callback
-        Disposable subscription = callback.subscribeOn(Schedulers.boundedElastic()).subscribe();
-
         return callback.doOnSubscribe(_subscription -> {
+            LOGGER.debug("callback subscribed");
             // start publishing data after subscribed
             demoEntityEmitterProcessor.onNext(_demoEntity);
-        }).doFinally(output -> {
-            // dispose the subscription when finish
-            subscription.dispose();
+        })
+        .doFinally(output -> {
+            // wrap-up handling
         })
         .timeout(
             // define timeout to release the mono if the response can't be produced timely
@@ -112,7 +108,8 @@ public class DemoRxController {
         .onErrorReturn(
             // failure result handle
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build()
-        );
+        )
+        .subscribeOn(Schedulers.boundedElastic());
     }
 
     /**

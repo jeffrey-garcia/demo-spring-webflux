@@ -22,7 +22,7 @@ invokeEndpoint() {
     for i in {1..1000}
     do
       echo "Looping ... number $i"
-      curl -i -X POST "http://localhost:8081/rx/demoEntity" -H "Content-Type: application/json" -d "{\"data\":\"a$i\"}" &
+      curl -i -X POST "http://localhost:8081/rx/demoEntity" -H "Content-Type: application/json" -d "{\"data\":\"a$i\"}"
       sleep 0.001 # delay before firing next request
     done
 
@@ -58,6 +58,6 @@ done
 sleep 5
 
 # check any outstanding curl request:
-`ps -ef | grep curl | awk '{print $2}'`
+ps -ef | grep curl | awk '{print $2}'
 
 #shutdownApp

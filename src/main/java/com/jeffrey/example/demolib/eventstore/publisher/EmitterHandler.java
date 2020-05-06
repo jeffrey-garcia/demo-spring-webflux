@@ -23,9 +23,8 @@ public final class EmitterHandler {
      * https://guava.dev/releases/21.0/api/docs/com/google/common/collect/MapMaker.html
      */
     private static final ConcurrentMap<? super Object, Callback<? super Object>> emitterCallbacks = new MapMaker()
-            .concurrencyLevel(4)
-            .weakKeys()
-            .weakValues()
+            .initialCapacity(1000)
+            .concurrencyLevel(8)
             .makeMap();
 
     public static <T> Mono<?> create(T sourceData) {
