@@ -23,6 +23,7 @@ public @interface EnableEventStore {
     // TODO: add support for JPA
 
     // Disabling specific Mongo Auto-configuration Classes
+    @SuppressWarnings("unused")
     @AliasFor(
             annotation = EnableAutoConfiguration.class,
             attribute = "exclude"
@@ -34,4 +35,8 @@ public @interface EnableEventStore {
             MongoReactiveDataAutoConfiguration.class
     };
 
+    // Indicate the usage of legacy SCSt annotation-based bindings configuration
+    // such as @EnableBinding, @Publisher, @StreamListener
+    @SuppressWarnings("unused")
+    boolean useLegacy() default false;
 }

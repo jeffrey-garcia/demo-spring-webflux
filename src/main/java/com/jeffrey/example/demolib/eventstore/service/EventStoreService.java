@@ -3,7 +3,6 @@ package com.jeffrey.example.demolib.eventstore.service;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableSet;
 import com.jeffrey.example.demolib.eventstore.dao.EventStoreDao;
-import com.jeffrey.example.demolib.eventstore.dao.MongoEventStoreDao;
 import com.jeffrey.example.demolib.eventstore.entity.DomainEvent;
 import com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor;
 import com.jeffrey.example.demolib.eventstore.util.ObjectMapperFactory;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
-import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -31,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import static com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor.GLOBAL_PUBLISHER_CONFIRM_CHANNEL;
 
 @Service("EventStoreService")
 public class EventStoreService<T> {

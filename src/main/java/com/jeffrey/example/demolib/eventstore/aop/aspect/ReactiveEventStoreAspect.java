@@ -26,6 +26,8 @@ public class ReactiveEventStoreAspect {
     @Autowired
     private EventStoreService eventStoreService;
 
+    private ReactiveEventStoreAspect() { }
+
 //    @Deprecated
 //    @SuppressWarnings("unused")
 //    @Pointcut("this(org.springframework.messaging.MessageChannel)")

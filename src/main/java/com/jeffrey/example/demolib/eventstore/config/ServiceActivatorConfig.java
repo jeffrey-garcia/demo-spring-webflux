@@ -6,15 +6,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 
-import static com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor.GLOBAL_ERROR_CHANNEL;
-import static com.jeffrey.example.demolib.eventstore.util.ChannelBindingAccessor.GLOBAL_PUBLISHER_CONFIRM_CHANNEL;
-
 /**
  * capture messages sent to the specified inputChannel
  */
 @Configuration("ServiceActivatorConfig")
 public class ServiceActivatorConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceActivatorConfig.class);
+
+    public static final String GLOBAL_ERROR_CHANNEL = "errorChannel";
+    public static final String GLOBAL_PUBLISHER_CONFIRM_CHANNEL = "publisher-confirm";
 
     @ServiceActivator(inputChannel = GLOBAL_ERROR_CHANNEL)
     public void onError(Message<?> message) {

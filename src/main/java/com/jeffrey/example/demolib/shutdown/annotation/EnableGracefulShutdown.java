@@ -39,4 +39,10 @@ public @interface EnableGracefulShutdown {
     )
     boolean useDefaultChannelInterceptor() default true;
 
+    @AliasFor(
+            annotation = EnableEventStore.class,
+            attribute = "useLegacy"
+    )
+    boolean useAnnotationBasedBindingsConfig() default false;
+
 }

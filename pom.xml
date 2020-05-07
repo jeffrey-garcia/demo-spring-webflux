@@ -20,7 +20,8 @@
 
 	<properties>
 		<java.version>1.8</java.version>
-		<!-- SR3 is required for support of Reactive functions  -->
+		<!-- SR3 is required for support of foreign event-driven sources -->
+		<!-- bridging of REST endpoint with functional mechanism used by SCSt -->
 		<spring-cloud-dependencies.version>Hoxton.SR3</spring-cloud-dependencies.version>
 	</properties>
 

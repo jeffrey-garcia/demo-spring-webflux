@@ -18,10 +18,8 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.AbstractMessageChannel;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.channel.PublishSubscribeChannel;
-import org.springframework.integration.handler.MessageProcessor;
 import org.springframework.integration.handler.MethodInvokingMessageProcessor;
 import org.springframework.integration.handler.ServiceActivatingHandler;
-import org.springframework.integration.handler.support.MessagingMethodInvokerHelper;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Component;
@@ -33,7 +31,9 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static com.jeffrey.example.demolib.eventstore.config.ServiceActivatorConfig.GLOBAL_ERROR_CHANNEL;
+import static com.jeffrey.example.demolib.eventstore.config.ServiceActivatorConfig.GLOBAL_PUBLISHER_CONFIRM_CHANNEL;
 
 /**
  * A handy utility class for accessing the {@link BindingServiceProperties}
@@ -62,11 +62,10 @@ public class ChannelBindingAccessor {
 
     private BeanFactory beanFactory;
 
-    public static final String GLOBAL_ERROR_CHANNEL = "errorChannel";
+//    public static final String GLOBAL_ERROR_CHANNEL = "errorChannel";
+//    public static final String GLOBAL_PUBLISHER_CONFIRM_CHANNEL = "publisher-confirm";
 
-    public static final String GLOBAL_PUBLISHER_CONFIRM_CHANNEL = "publisher-confirm";
-
-    public ChannelBindingAccessor(
+    private ChannelBindingAccessor(
             Environment environment,
             ApplicationContext applicationContext,
             BindingServiceProperties bindingServiceProperties,
@@ -103,12 +102,12 @@ public class ChannelBindingAccessor {
         final ImmutableMap<String, String> producerConfirmAckChannelsMap = getAllProducerChannelsWithConfirmAck();
         final ImmutableMap<String, ServiceActivatingHandler> serviceActivatingHandlerMap = getAllServiceActivatingHandlersWithInputChannels();
 
-        if (serviceActivatingHandlerMap.get(ChannelBindingAccessor.GLOBAL_PUBLISHER_CONFIRM_CHANNEL)==null) {
+        if (serviceActivatingHandlerMap.get(GLOBAL_PUBLISHER_CONFIRM_CHANNEL)==null) {
             LOGGER.warn("service activator not configured for: {}", GLOBAL_PUBLISHER_CONFIRM_CHANNEL);
             return ImmutableSet.of();
         }
 
-        if (serviceActivatingHandlerMap.get(ChannelBindingAccessor.GLOBAL_ERROR_CHANNEL)==null) {
+        if (serviceActivatingHandlerMap.get(GLOBAL_ERROR_CHANNEL)==null) {
             LOGGER.warn("service activator not configured for: {}", GLOBAL_ERROR_CHANNEL);
             return ImmutableSet.of();
         }

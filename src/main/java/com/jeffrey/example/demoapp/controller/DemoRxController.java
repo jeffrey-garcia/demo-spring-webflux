@@ -90,7 +90,6 @@ public class DemoRxController {
         // create the callback
         Mono<?> callback = EmitterHandler.create(_demoEntity);
         return callback.doOnSubscribe(_subscription -> {
-            LOGGER.debug("callback subscribed");
             // start publishing data after subscribed
             demoEntityEmitterProcessor.onNext(_demoEntity);
         })

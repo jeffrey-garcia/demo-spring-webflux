@@ -2,7 +2,6 @@ package com.jeffrey.example.demolib.eventstore.config;
 
 import com.jeffrey.example.demolib.eventstore.aop.advice.ConsumerAdviceInvocator;
 import com.jeffrey.example.demolib.eventstore.aop.advice.SupplierAdviceInvocator;
-import com.jeffrey.example.demolib.eventstore.aop.aspect.ReactiveEventStoreAspect;
 import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
 import org.aopalliance.aop.Advice;
 import org.aopalliance.intercept.MethodInterceptor;
@@ -15,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.util.Assert;
 import reactor.core.publisher.Flux;
@@ -25,12 +23,9 @@ import java.util.function.Supplier;
 
 /**
  * Configuration class which hook up reactive event store components with externalized configuration.
- * Auto-detect and registers {@link ReactiveEventStoreAspect} using classpath scanning
  *
- * @see ReactiveEventStoreAspect
  * @author Jeffrey Garcia Wong
  */
-@ComponentScan(basePackageClasses = {ReactiveEventStoreAspect.class})
 @Configuration
 public class ReactiveEventStoreConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveEventStoreConfig.class);

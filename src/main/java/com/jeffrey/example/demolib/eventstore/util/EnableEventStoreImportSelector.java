@@ -1,8 +1,8 @@
 package com.jeffrey.example.demolib.eventstore.util;
 
-import com.jeffrey.example.demoapp.dao.DemoDao;
-import com.jeffrey.example.demoapp.dao.DemoRxDao;
 import com.jeffrey.example.demolib.eventstore.annotation.EnableEventStore;
+import com.jeffrey.example.demolib.eventstore.aop.aspect.EventStoreAspect;
+import com.jeffrey.example.demolib.eventstore.aop.aspect.ReactiveEventStoreAspect;
 import com.jeffrey.example.demolib.eventstore.config.*;
 import com.jeffrey.example.demolib.eventstore.dao.MongoEventStoreDao;
 import com.jeffrey.example.demolib.eventstore.service.EventStoreService;
@@ -25,6 +25,8 @@ public class EnableEventStoreImportSelector extends SpringFactoryImportSelector<
         } else {
             String [] imports = super.selectImports(metadata);
             AnnotationAttributes attributes = AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(this.getAnnotationClass().getName(), true));
+            boolean useLegacy = attributes.getBoolean("useLegacy");
+
             List<String> importsList = new ArrayList<>(Arrays.asList(imports));
 
             // core dependencies for input/output channels integration
@@ -38,8 +40,19 @@ public class EnableEventStoreImportSelector extends SpringFactoryImportSelector<
 
             // event store higher level dependencies: bindings/functions interceptor
             importsList.add(EventStoreConfig.class.getName());
-            importsList.add(ReactiveEventStoreConfig.class.getName());
             importsList.add(EventStoreService.class.getName());
+            importsList.add(EventStoreAspect.class.getName());
+
+            /**
+             * (useLegacy = true) imply the user explicitly request retain the use
+             * annotation-based bindings configuration instead of the functional
+             * mechanism provided by SCSt
+             */
+            if (!useLegacy) {
+                // ONLY import the SCSt reactive functions mechanism support if useLegacy is FALSE (defaults TRUE)
+                importsList.add(ReactiveEventStoreConfig.class.getName());
+                importsList.add(ReactiveEventStoreAspect.class.getName());
+            }
 
             imports = importsList.toArray(new String[0]);
             return imports;
