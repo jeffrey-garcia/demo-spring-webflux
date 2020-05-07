@@ -21,7 +21,7 @@ public class EnableGracefulShutdownImportSelector extends SpringFactoryImportSel
     public String[] selectImports(AnnotationMetadata metadata) {
         String[] imports = super.selectImports(metadata);
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(metadata.getAnnotationAttributes(this.getAnnotationClass().getName(), true));
-        List<String> importsList = new ArrayList(Arrays.asList(imports));
+        List<String> importsList = new ArrayList<>(Arrays.asList(imports));
         if (!this.isEnabled()) {
             // TODO: explore way to disable it at runtime without restart
             return new String[0];

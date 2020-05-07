@@ -11,6 +11,10 @@ import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.*;
 
+/**
+ * Annotation to enable a local event store implementation.
+ * @author Jeffrey Garcia Wong
+ */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
@@ -22,7 +26,10 @@ public @interface EnableEventStore {
     // TODO: depends on the DB storage specified by user
     // TODO: add support for JPA
 
-    // Disabling specific Mongo Auto-configuration Classes
+    /**
+     * Disable specific Mongo Auto-configuration classes
+     * @return - the list of classes to be disabled from auto-configuration
+     */
     @SuppressWarnings("unused")
     @AliasFor(
             annotation = EnableAutoConfiguration.class,

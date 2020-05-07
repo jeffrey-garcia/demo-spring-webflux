@@ -38,7 +38,7 @@ public class EnableEventStoreImportSelector extends SpringFactoryImportSelector<
             // by any components at the lower-level
             importsList.add(EventStoreConfig.class.getName());
 
-            // event store database dependencies
+            // event store database configuration
             importsList.add(MongoDbConfig.class.getName());
             importsList.add(ReactiveMongoDbConfig.class.getName());
             importsList.add(MongoEventStoreDao.class.getName());

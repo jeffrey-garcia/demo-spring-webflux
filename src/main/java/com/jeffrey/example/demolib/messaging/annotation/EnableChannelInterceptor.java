@@ -11,5 +11,8 @@ import java.lang.annotation.*;
 @Inherited
 @Import({EnableChannelInterceptorImportSelector.class})
 public @interface EnableChannelInterceptor {
+
+    @SuppressWarnings("unused")
     boolean useDefault() default true;
+
 }

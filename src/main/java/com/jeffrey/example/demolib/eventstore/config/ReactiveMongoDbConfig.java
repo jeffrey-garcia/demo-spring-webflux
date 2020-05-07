@@ -15,6 +15,11 @@ import org.springframework.data.mongodb.core.SimpleReactiveMongoDatabaseFactory;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.util.Assert;
 
+/**
+ * Event store database configuration for reactive MongoDB
+ *
+ * @author Jeffrey Garcia Wong
+ */
 @Configuration
 public class ReactiveMongoDbConfig extends AbstractReactiveMongoConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReactiveMongoDbConfig.class);

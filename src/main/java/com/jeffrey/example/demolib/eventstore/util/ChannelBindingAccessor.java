@@ -62,9 +62,6 @@ public class ChannelBindingAccessor {
 
     private BeanFactory beanFactory;
 
-//    public static final String GLOBAL_ERROR_CHANNEL = "errorChannel";
-//    public static final String GLOBAL_PUBLISHER_CONFIRM_CHANNEL = "publisher-confirm";
-
     private ChannelBindingAccessor(
             Environment environment,
             ApplicationContext applicationContext,

@@ -17,6 +17,11 @@ import org.springframework.data.mongodb.core.SimpleMongoClientDbFactory;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.util.Assert;
 
+/**
+ * Event store database configuration for MongoDB
+ *
+ * @author Jeffrey Garcia Wong
+ */
 @Configuration
 @EnableTransactionManagement
 public class MongoDbConfig extends AbstractMongoClientConfiguration {

@@ -7,7 +7,7 @@ import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
 
 /**
- * capture messages sent to the specified inputChannel
+ * Service activator configuration to capture messages sent to the specified inputChannel
  */
 @Configuration("ServiceActivatorConfig")
 public class ServiceActivatorConfig {

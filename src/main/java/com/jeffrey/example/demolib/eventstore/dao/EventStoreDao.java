@@ -1,6 +1,5 @@
 package com.jeffrey.example.demolib.eventstore.dao;
 
-
 import com.jeffrey.example.demolib.eventstore.command.EventStoreCallbackCommand;
 import com.jeffrey.example.demolib.eventstore.entity.DomainEvent;
 

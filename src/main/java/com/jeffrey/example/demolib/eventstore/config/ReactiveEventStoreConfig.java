@@ -22,7 +22,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Configuration class which hook up reactive event store components with externalized configuration.
+ * Event store configuration to support functional bindings mechanism of SCSt
+ * and reactive data processing
  *
  * @author Jeffrey Garcia Wong
  */
@@ -148,15 +149,22 @@ public class ReactiveEventStoreConfig {
         BeanNameAutoProxyCreator beanNameAutoProxyCreator = new BeanNameAutoProxyCreator();
 
         /**
-         * To intercept the message data, intercept the output channel instead of the Supplier,
-         * Supplier's get() function doesn't have input parameter.
+         * To intercept outgoing message data, intercept at output channel sending instead of the Supplier.
+         * This is due to the following reasons:
+         * - We need to ensure the write to event store and sending to broker is atomic, either
+         *   both of them completes or none of them happens
+         * - Supplier's get() function doesn't have input parameter, intercepting can only happen
+         *   after the joinpoint execution finished, but not around which limits what we can do
+         *   during the interception
          *
-         * However, Supplier's output channel will only be created right after all the beans are
-         * instantiated and all dependencies are injected, therefore we can't populate the supplier
-         * channels until application state becomes ready.
-         *
-         * Lookup through binding configurations is also not an option since we can't dictate
-         * the bindings is an input or output channel until the channel is created.
+         * Other possible alternatives:
+         * - Dynamically lookup output channel through binding configurations is also not an option
+         *   since we can't differentiate the bindings is an input or output channel until the channel
+         *   is created.
+         * - Let use to configure the supplier channel's name. However, Supplier's output channel will
+         *   only be created right after all the beans are instantiated and all dependencies are injected,
+         *   therefore we can't populate the supplier channels until application state becomes ready.
+         *   That part is therefore done using a separate Aspect component (ReactiveEventStoreAspect).
          */
 //        final String[] bindableBeanNames = applicationContext.getBeanNamesForType(Bindable.class);
 

@@ -13,7 +13,9 @@ import java.time.ZoneId;
 import java.util.UUID;
 
 /**
- * Configuration class which hook up event store components with externalized configuration.
+ * Event store configuration
+ * - should only contain general configuration object that is globally accessible
+ *   by any components at the lower-level
  *
  * @author Jeffrey Garcia Wong
  */

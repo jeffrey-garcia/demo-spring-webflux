@@ -22,6 +22,7 @@ import java.lang.annotation.*;
 @EnableEventStore
 public @interface EnableGracefulShutdown {
 
+    @SuppressWarnings("unused")
     @AliasFor(
             annotation = EnableAutoConfiguration.class,
             attribute = "exclude"
@@ -33,12 +34,14 @@ public @interface EnableGracefulShutdown {
             MongoReactiveDataAutoConfiguration.class
     };
 
+    @SuppressWarnings("unused")
     @AliasFor(
             annotation = EnableChannelInterceptor.class,
             attribute = "useDefault"
     )
     boolean useDefaultChannelInterceptor() default true;
 
+    @SuppressWarnings("unused")
     @AliasFor(
             annotation = EnableEventStore.class,
             attribute = "useLegacy"
